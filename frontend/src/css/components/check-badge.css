@@ -1,0 +1,209 @@
+/**
+ * Check Badge Component Styles
+ * 
+ * Styles for pass/fail badges used in workflow stepper and constitution checks.
+ */
+
+/* ==========================================================================
+   Base Badge Styles
+   ========================================================================== */
+
+.check-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease-out;
+}
+
+/* ==========================================================================
+   Badge Variants
+   ========================================================================== */
+
+.check-badge--passed {
+    background: var(--color-success-subtle);
+    color: var(--color-success-fg);
+    border: 1px solid var(--color-success-muted);
+}
+
+.check-badge--failed {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-fg);
+    border: 1px solid var(--color-danger-muted);
+}
+
+.check-badge--warning {
+    background: var(--color-attention-subtle);
+    color: var(--color-attention-fg);
+    border: 1px solid var(--color-attention-muted);
+}
+
+.check-badge--pending {
+    background: var(--color-neutral-subtle);
+    color: var(--color-fg-muted);
+    border: 1px solid var(--color-border-default);
+}
+
+.check-badge--running {
+    background: var(--color-accent-subtle);
+    color: var(--color-accent-fg);
+    border: 1px solid var(--color-accent-muted);
+}
+
+/* ==========================================================================
+   Badge Icons
+   ========================================================================== */
+
+.check-badge-icon {
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.check-badge--passed .check-badge-icon::before {
+    content: '✓';
+}
+
+.check-badge--failed .check-badge-icon::before {
+    content: '✗';
+}
+
+.check-badge--warning .check-badge-icon::before {
+    content: '!';
+}
+
+.check-badge--pending .check-badge-icon::before {
+    content: '○';
+}
+
+.check-badge--running .check-badge-icon {
+    animation: spin 1s linear infinite;
+}
+
+.check-badge--running .check-badge-icon::before {
+    content: '↻';
+}
+
+/* ==========================================================================
+   Compact Badge (for inline use)
+   ========================================================================== */
+
+.check-badge--compact {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.6875rem;
+    border-radius: 8px;
+}
+
+/* ==========================================================================
+   Large Badge (for prominent display)
+   ========================================================================== */
+
+.check-badge--large {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 16px;
+}
+
+/* ==========================================================================
+   Badge in Workflow Stepper
+   ========================================================================== */
+
+.phase-check-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.phase-check-badge--passed {
+    background: var(--color-success-emphasis);
+    color: white;
+}
+
+.phase-check-badge--passed::after {
+    content: '✓';
+    font-size: 0.625rem;
+}
+
+.phase-check-badge--failed {
+    background: var(--color-danger-emphasis);
+    color: white;
+}
+
+.phase-check-badge--failed::after {
+    content: '✗';
+    font-size: 0.625rem;
+}
+
+.phase-check-badge--warning {
+    background: var(--color-attention-emphasis);
+    color: white;
+}
+
+.phase-check-badge--warning::after {
+    content: '!';
+    font-size: 0.625rem;
+}
+
+/* ==========================================================================
+   Badge Counter (for multiple checks)
+   ========================================================================== */
+
+.check-badge-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.check-badge-count {
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.check-badge-count--passed {
+    color: var(--color-success-fg);
+}
+
+.check-badge-count--failed {
+    color: var(--color-danger-fg);
+}
+
+.check-badge-count--warning {
+    color: var(--color-attention-fg);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.check-badge--animated {
+    animation: badgePulse 0.5s ease-in-out 2;
+}
+
+.check-badge--failed.check-badge--animated {
+    animation: badgePulse 0.5s ease-in-out 3;
+}

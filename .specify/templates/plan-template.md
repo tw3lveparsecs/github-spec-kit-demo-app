@@ -31,7 +31,35 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### I. Code Quality Standards
+- [ ] Linting and formatting tools configured for project language
+- [ ] Code review process defined (minimum 1 reviewer)
+- [ ] Documentation standards established for APIs and public interfaces
+- [ ] Static typing enabled where applicable
+- [ ] Naming conventions documented
+
+### II. Testing Standards (NON-NEGOTIABLE)
+- [ ] Test framework selected and configured
+- [ ] Test-first development approach documented
+- [ ] 80% minimum code coverage requirement confirmed
+- [ ] Test types defined: unit, integration, contract, e2e
+- [ ] CI/CD pipeline configured to run tests automatically
+
+### III. User Experience Consistency
+- [ ] Design system or UI guidelines defined (if UI feature)
+- [ ] Accessibility standards documented (WCAG 2.1 AA minimum)
+- [ ] Responsive design requirements specified (if UI feature)
+- [ ] Error handling and user feedback patterns defined
+- [ ] Loading states and progress indicators planned
+
+### IV. Performance Requirements
+- [ ] Response time thresholds defined (p95 < 200ms for APIs, <100ms for UI)
+- [ ] Throughput requirements specified for expected load
+- [ ] Resource limits defined (memory, CPU, network)
+- [ ] Performance monitoring and alerting configured
+- [ ] Database indexing strategy planned (if applicable)
+
+**Violations Requiring Justification**: [List any standards that cannot be met and why]
 
 ## Project Structure
 

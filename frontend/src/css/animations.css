@@ -1,0 +1,513 @@
+/**
+ * Animations CSS
+ * 
+ * Animation keyframes and transition styles for smooth UI interactions.
+ */
+
+/* ==========================================================================
+   Keyframe Animations
+   ========================================================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes progressFill {
+    from {
+        width: 0%;
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ==========================================================================
+   Animation Classes
+   ========================================================================== */
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-in-out;
+}
+
+.slide-in-down {
+    animation: slideInDown 0.4s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.4s ease-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.4s ease-out;
+}
+
+.pulse-animation {
+    animation: pulse 0.5s ease-in-out 2;
+}
+
+.bounce-animation {
+    animation: bounce 0.6s ease-in-out 2;
+}
+
+/* ==========================================================================
+   Transition Utilities
+   ========================================================================== */
+
+.transition-all {
+    transition: all 0.3s ease-in-out;
+}
+
+.transition-fast {
+    transition: all 0.15s ease-in-out;
+}
+
+.transition-slow {
+    transition: all 0.5s ease-in-out;
+}
+
+.transition-opacity {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.transition-transform {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* ==========================================================================
+   Loading States
+   ========================================================================== */
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    gap: 1rem;
+}
+
+.spinner-icon {
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-circle {
+    stroke-dasharray: 50, 200;
+    stroke-dashoffset: 0;
+    animation: spinCircle 1.5s ease-in-out infinite;
+}
+
+@keyframes spinCircle {
+    0% {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 100, 200;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 100, 200;
+        stroke-dashoffset: -125;
+    }
+}
+
+.spinner-text {
+    color: var(--color-fg-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Loading skeleton for content */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--color-canvas-subtle) 0%,
+        var(--color-canvas-default) 50%,
+        var(--color-canvas-subtle) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-heading {
+    height: 1.5rem;
+    width: 60%;
+    margin-bottom: 1rem;
+}
+
+/* ==========================================================================
+   Phase Transition Animations
+   ========================================================================== */
+
+.phase-transition-enter {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.phase-transition-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.phase-transition-leave {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.phase-transition-leave-active {
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+}
+
+/* ==========================================================================
+   Progress Bar Animations
+   ========================================================================== */
+
+.progress-bar-fill {
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-bar-indeterminate {
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-indeterminate::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 30%;
+    background: var(--color-accent-emphasis);
+    animation: progressIndeterminate 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes progressIndeterminate {
+    0% {
+        left: -30%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* ==========================================================================
+   Hover and Focus Effects
+   ========================================================================== */
+
+.hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hover-scale {
+    transition: transform 0.2s ease-out;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-brightness {
+    transition: filter 0.2s ease-out;
+}
+
+.hover-brightness:hover {
+    filter: brightness(1.1);
+}
+
+/* Focus visible styles */
+.focus-ring:focus-visible {
+    outline: 2px solid var(--color-accent-emphasis);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+/* Prevent animations on page load */
+.no-animations,
+.no-animations * {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Hide element with animation */
+.hidden-animated {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+.hidden-animated.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==========================================================================
+   Constitution Violation Warning Animations
+   ========================================================================== */
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes pulseWarning {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(212, 106, 13, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(212, 106, 13, 0);
+    }
+}
+
+@keyframes pulseError {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(218, 54, 51, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(218, 54, 51, 0);
+    }
+}
+
+@keyframes flash {
+    0%, 50%, 100% {
+        opacity: 1;
+    }
+    25%, 75% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes glowWarning {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(212, 106, 13, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(212, 106, 13, 0.6);
+    }
+}
+
+@keyframes glowError {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(218, 54, 51, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(218, 54, 51, 0.6);
+    }
+}
+
+/* Warning and Error Animation Classes */
+.shake-animation {
+    animation: shake 0.5s ease-in-out;
+}
+
+.pulse-warning-animation {
+    animation: pulseWarning 1s ease-in-out 3;
+}
+
+.pulse-error-animation {
+    animation: pulseError 1s ease-in-out 3;
+}
+
+.flash-animation {
+    animation: flash 1s ease-in-out 3;
+}
+
+.glow-warning-animation {
+    animation: glowWarning 1.5s ease-in-out infinite;
+}
+
+.glow-error-animation {
+    animation: glowError 1.5s ease-in-out infinite;
+}
+
+/* Violation indicator badge */
+.violation-indicator {
+    position: relative;
+}
+
+.violation-indicator::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-danger-emphasis);
+    border-radius: 50%;
+    border: 2px solid var(--color-canvas-default);
+    animation: pulseError 1.5s ease-in-out infinite;
+}
+
+.violation-indicator--warning::after {
+    background: var(--color-attention-emphasis);
+    animation: pulseWarning 1.5s ease-in-out infinite;
+}
+
+/* Violation count badge */
+.violation-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    background: var(--color-danger-emphasis);
+    border-radius: 10px;
+    animation: pulseError 2s ease-in-out infinite;
+}
+
+.violation-count-badge--warning {
+    background: var(--color-attention-emphasis);
+    animation: pulseWarning 2s ease-in-out infinite;
+}
+
+/* Constitution check result animations */
+.check-result-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.check-result-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.check-result--passed {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.check-result--failed {
+    animation: shake 0.5s ease-in-out, fadeIn 0.3s ease-out;
+}
+
+.check-result--warning {
+    animation: flash 0.8s ease-in-out;
+}

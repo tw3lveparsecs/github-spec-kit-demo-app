@@ -1,0 +1,334 @@
+/**
+ * Workflow Stepper Component Styles
+ * 
+ * Styles for the 5-phase workflow stepper UI component.
+ */
+
+/* ==========================================================================
+   Stepper Container
+   ========================================================================== */
+
+.workflow-stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: var(--color-canvas-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.stepper-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.stepper-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-fg-default);
+    margin: 0;
+}
+
+.stepper-progress-label {
+    font-size: 0.875rem;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Progress Bar
+   ========================================================================== */
+
+.stepper-progress {
+    width: 100%;
+    height: 8px;
+    background: var(--color-canvas-default);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.stepper-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent-emphasis) 0%, var(--color-accent-fg) 100%);
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   Phase Steps
+   ========================================================================== */
+
+.stepper-phases {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+}
+
+/* Connector line between phases */
+.stepper-phases::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: var(--color-border-muted);
+    z-index: 0;
+}
+
+.phase-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+}
+
+.phase-step:hover .phase-icon {
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+   Phase Icon
+   ========================================================================== */
+
+.phase-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: var(--color-canvas-default);
+    border: 3px solid var(--color-border-default);
+    transition: all 0.3s ease-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Phase states */
+.phase-completed .phase-icon {
+    background: var(--color-success-emphasis);
+    border-color: var(--color-success-emphasis);
+    color: white;
+}
+
+.phase-completed .phase-icon::after {
+    content: '✓';
+    position: absolute;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.phase-current .phase-icon {
+    background: var(--color-accent-emphasis);
+    border-color: var(--color-accent-emphasis);
+    color: white;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 4px rgba(9, 105, 218, 0.2);
+}
+
+.phase-upcoming .phase-icon {
+    background: var(--color-canvas-default);
+    border-color: var(--color-border-muted);
+    color: var(--color-fg-muted);
+}
+
+/* ==========================================================================
+   Phase Label
+   ========================================================================== */
+
+.phase-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.phase-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-fg-default);
+    margin: 0;
+}
+
+.phase-order {
+    font-size: 0.75rem;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+}
+
+/* Phase state labels */
+.phase-completed .phase-name {
+    color: var(--color-success-fg);
+}
+
+.phase-current .phase-name {
+    color: var(--color-accent-fg);
+    font-weight: 700;
+}
+
+.phase-upcoming .phase-name {
+    color: var(--color-fg-muted);
+}
+
+/* ==========================================================================
+   Navigation Buttons
+   ========================================================================== */
+
+.stepper-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border-default);
+}
+
+.stepper-nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-phase-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-btn-primary-bg);
+    color: var(--color-btn-primary-text);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+}
+
+.btn-phase-nav:hover:not(:disabled) {
+    background: var(--color-btn-primary-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-phase-nav:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-phase-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-phase-prev::before {
+    content: '←';
+}
+
+.btn-phase-next::after {
+    content: '→';
+}
+
+/* ==========================================================================
+   Phase Jump Dropdown
+   ========================================================================== */
+
+.phase-jump-dropdown {
+    position: relative;
+}
+
+.phase-jump-select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    background: var(--color-canvas-default);
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--color-fg-default);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23586069' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    transition: all 0.2s ease-out;
+}
+
+.phase-jump-select:hover {
+    border-color: var(--color-accent-emphasis);
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+}
+
+.phase-jump-select:focus {
+    outline: none;
+    border-color: var(--color-accent-emphasis);
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.2);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .workflow-stepper {
+        padding: 1rem;
+    }
+    
+    .stepper-phases {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .stepper-phases::before {
+        display: none;
+    }
+    
+    .phase-step {
+        flex-direction: row;
+        justify-content: flex-start;
+        width: 100%;
+    }
+    
+    .phase-label {
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .stepper-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .stepper-nav-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .btn-phase-nav {
+        flex: 1;
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .workflow-stepper {
+        background: var(--color-canvas-inset);
+    }
+    
+    .phase-icon {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .phase-current .phase-icon {
+        box-shadow: 0 0 0 4px rgba(9, 105, 218, 0.3);
+    }
+}

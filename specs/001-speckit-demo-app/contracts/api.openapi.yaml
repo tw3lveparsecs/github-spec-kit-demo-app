@@ -1,0 +1,691 @@
+openapi: 3.0.3
+info:
+  title: GitHub Spec Kit Demo Application API
+  description: REST API for demonstrating Spec Kit workflow to audiences
+  version: 1.0.0
+  contact:
+    name: Demo App Support
+    
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+  - url: https://speckit-demo.azurewebsites.net/api
+    description: Azure App Service production
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns service health status for Azure App Service health probes
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /scenarios:
+    get:
+      summary: List all demo scenarios
+      description: Retrieves all pre-loaded and custom demo scenarios
+      operationId: listScenarios
+      tags:
+        - Scenarios
+      responses:
+        '200':
+          description: List of scenarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenarios:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DemoScenario'
+                  total:
+                    type: integer
+                    example: 5
+
+  /scenarios/{scenarioId}:
+    get:
+      summary: Get specific scenario
+      description: Retrieves detailed information about a specific demo scenario
+      operationId: getScenario
+      tags:
+        - Scenarios
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "user-authentication"
+      responses:
+        '200':
+          description: Scenario details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoScenario'
+        '404':
+          description: Scenario not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scenarios/custom:
+    post:
+      summary: Create custom scenario
+      description: Creates a new custom demo scenario from user input
+      operationId: createCustomScenario
+      tags:
+        - Scenarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - domain
+                - initial_prompt
+              properties:
+                title:
+                  type: string
+                  minLength: 5
+                  maxLength: 100
+                  example: "Real-Time Chat System"
+                description:
+                  type: string
+                  minLength: 20
+                  maxLength: 500
+                  example: "Build a WebSocket-based real-time chat with presence indicators"
+                domain:
+                  type: string
+                  enum: [security, ecommerce, analytics, infrastructure, data, ui, other]
+                  example: "infrastructure"
+                initial_prompt:
+                  type: string
+                  example: "Create a scalable chat system supporting 10k concurrent users"
+      responses:
+        '201':
+          description: Custom scenario created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoScenario'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /workflow/{scenarioId}:
+    get:
+      summary: Get workflow state
+      description: Retrieves current workflow state for a scenario
+      operationId: getWorkflowState
+      tags:
+        - Workflow
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenario_id:
+                    type: string
+                  current_phase:
+                    $ref: '#/components/schemas/WorkflowPhase'
+                  all_phases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowPhase'
+                  progress_percentage:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+
+  /workflow/{scenarioId}/step:
+    post:
+      summary: Advance workflow step
+      description: Moves workflow to next phase or processes current phase
+      operationId: advanceWorkflow
+      tags:
+        - Workflow
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_input:
+                  type: string
+                  description: Input for phases requiring clarification
+                  example: "Use OAuth 2.0 for authentication"
+      responses:
+        '200':
+          description: Workflow advanced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  previous_phase:
+                    type: string
+                  current_phase:
+                    $ref: '#/components/schemas/WorkflowPhase'
+                  generated_artifact:
+                    $ref: '#/components/schemas/GeneratedArtifact'
+        '400':
+          description: Cannot advance (input required or validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /workflow/{scenarioId}/jump:
+    post:
+      summary: Jump to specific phase
+      description: Allows presenter to skip ahead or go back to any workflow phase
+      operationId: jumpToPhase
+      tags:
+        - Workflow
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_phase
+              properties:
+                target_phase:
+                  type: string
+                  enum: [specify, clarify, plan, tasks, implement]
+                  example: "plan"
+      responses:
+        '200':
+          description: Jumped to phase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowPhase'
+
+  /workflow/reset:
+    post:
+      summary: Reset demo
+      description: Clears all demo state and returns to initial conditions
+      operationId: resetDemo
+      tags:
+        - Workflow
+      responses:
+        '200':
+          description: Demo reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Demo reset successfully"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /constitution:
+    get:
+      summary: Get constitution principles
+      description: Retrieves all constitution principles with checks
+      operationId: getConstitution
+      tags:
+        - Constitution
+      responses:
+        '200':
+          description: Constitution principles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  principles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConstitutionPrinciple'
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /constitution/check/{artifactId}:
+    get:
+      summary: Get constitution check results
+      description: Retrieves constitution check results for a generated artifact
+      operationId: getConstitutionChecks
+      tags:
+        - Constitution
+      parameters:
+        - name: artifactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Check results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artifact_id:
+                    type: string
+                  checks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConstitutionCheck'
+                  violations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConstitutionViolation'
+                  overall_status:
+                    type: string
+                    enum: [pass, fail, pending]
+
+  /session:
+    get:
+      summary: Get current session
+      description: Retrieves current demo session state
+      operationId: getSession
+      tags:
+        - Session
+      responses:
+        '200':
+          description: Session state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoSession'
+
+    post:
+      summary: Update session
+      description: Updates demo session state (called from client to sync)
+      operationId: updateSession
+      tags:
+        - Session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoSession'
+      responses:
+        '200':
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoSession'
+
+  /presenter-notes/{contextType}/{contextId}:
+    get:
+      summary: Get presenter notes
+      description: Retrieves talking points for a specific context
+      operationId: getPresenterNotes
+      tags:
+        - Presenter Notes
+      parameters:
+        - name: contextType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [scenario, phase, principle, general]
+        - name: contextId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Presenter notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PresenterNote'
+
+components:
+  schemas:
+    DemoScenario:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - domain
+        - is_custom
+        - workflow_phases
+      properties:
+        id:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          example: "user-authentication"
+        title:
+          type: string
+          minLength: 5
+          maxLength: 100
+          example: "User Authentication System"
+        description:
+          type: string
+          minLength: 20
+          maxLength: 500
+          example: "Implement secure user authentication with OAuth 2.0"
+        domain:
+          type: string
+          enum: [security, ecommerce, analytics, infrastructure, data, ui, other]
+        created_at:
+          type: string
+          format: date-time
+        is_custom:
+          type: boolean
+        workflow_phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowPhase'
+        initial_prompt:
+          type: string
+
+    WorkflowPhase:
+      type: object
+      required:
+        - phase_name
+        - display_name
+        - order
+        - command
+        - status
+      properties:
+        phase_name:
+          type: string
+          enum: [specify, clarify, plan, tasks, implement]
+        display_name:
+          type: string
+          example: "Specification"
+        order:
+          type: integer
+          minimum: 1
+          maximum: 5
+        command:
+          type: string
+          example: "/speckit.specify"
+        input_required:
+          type: boolean
+        input_prompt:
+          type: string
+        generated_artifact:
+          $ref: '#/components/schemas/GeneratedArtifact'
+        estimated_duration_seconds:
+          type: integer
+          minimum: 1
+          maximum: 10
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, skipped]
+
+    GeneratedArtifact:
+      type: object
+      required:
+        - artifact_id
+        - artifact_type
+        - filename
+        - content
+        - generated_at
+      properties:
+        artifact_id:
+          type: string
+          format: uuid
+        artifact_type:
+          type: string
+          enum: [spec, plan, tasks, research, data-model, quickstart]
+        filename:
+          type: string
+          pattern: '^[a-z-]+\.md$'
+          example: "spec.md"
+        content:
+          type: string
+          description: Full markdown content
+        content_preview:
+          type: string
+          maxLength: 200
+        generated_at:
+          type: string
+          format: date-time
+        line_count:
+          type: integer
+        word_count:
+          type: integer
+        has_constitution_checks:
+          type: boolean
+
+    ConstitutionPrinciple:
+      type: object
+      required:
+        - principle_id
+        - roman_numeral
+        - title
+        - description
+      properties:
+        principle_id:
+          type: string
+          enum: [code-quality, testing, ux, performance]
+        roman_numeral:
+          type: string
+          enum: [I, II, III, IV]
+        title:
+          type: string
+          example: "Code Quality Standards"
+        description:
+          type: string
+        rationale:
+          type: string
+        checks:
+          type: array
+          items:
+            type: string
+        is_non_negotiable:
+          type: boolean
+
+    ConstitutionCheck:
+      type: object
+      required:
+        - check_id
+        - principle_id
+        - check_text
+        - status
+      properties:
+        check_id:
+          type: string
+        principle_id:
+          type: string
+        check_text:
+          type: string
+        status:
+          type: string
+          enum: [pass, fail, pending, not_applicable]
+        explanation:
+          type: string
+        can_be_justified:
+          type: boolean
+
+    ConstitutionViolation:
+      type: object
+      required:
+        - violation_id
+        - check_id
+        - principle_id
+        - artifact_id
+        - violation_description
+        - is_blocking
+        - resolution_status
+      properties:
+        violation_id:
+          type: string
+          format: uuid
+        check_id:
+          type: string
+        principle_id:
+          type: string
+        artifact_id:
+          type: string
+        violation_description:
+          type: string
+        justification:
+          type: string
+        is_blocking:
+          type: boolean
+        resolution_status:
+          type: string
+          enum: [unresolved, justified, fixed]
+
+    DemoSession:
+      type: object
+      required:
+        - session_id
+        - started_at
+        - presenter_notes_visible
+        - custom_scenarios
+        - action_log
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        started_at:
+          type: string
+          format: date-time
+        current_scenario_id:
+          type: string
+        current_phase_name:
+          type: string
+        presenter_notes_visible:
+          type: boolean
+          default: false
+        custom_scenarios:
+          type: array
+          items:
+            type: string
+        action_log:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionLogEntry'
+
+    ActionLogEntry:
+      type: object
+      required:
+        - entry_id
+        - timestamp
+        - action_type
+        - action_detail
+      properties:
+        entry_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        action_type:
+          type: string
+          enum: [scenario_select, phase_advance, phase_jump, reset, custom_create, notes_toggle]
+        action_detail:
+          type: string
+        duration_ms:
+          type: integer
+
+    PresenterNote:
+      type: object
+      required:
+        - note_id
+        - context_type
+        - context_id
+        - note_text
+        - display_order
+      properties:
+        note_id:
+          type: string
+        context_type:
+          type: string
+          enum: [scenario, phase, principle, general]
+        context_id:
+          type: string
+        note_text:
+          type: string
+          description: Markdown-formatted talking points
+        is_critical:
+          type: boolean
+        display_order:
+          type: integer
+
+    Error:
+      type: object
+      required:
+        - error
+        - code
+        - status
+      properties:
+        error:
+          type: string
+          description: Human-readable error description
+        code:
+          type: string
+          description: Machine-readable error code
+          example: "SCENARIO_NOT_FOUND"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 404
+        details:
+          type: object
+          description: Additional error context

@@ -1,0 +1,309 @@
+/**
+ * Form Validation Styles
+ * 
+ * Styles for form validation states, error messages, and success indicators.
+ */
+
+/* ==========================================================================
+   Field States
+   ========================================================================== */
+
+/* Valid field */
+.form-field--valid .form-field__input,
+.form-field--valid .form-field__textarea,
+.form-field--valid .form-field__select {
+    border-color: var(--color-success-emphasis);
+}
+
+.form-field--valid .form-field__input:focus,
+.form-field--valid .form-field__textarea:focus,
+.form-field--valid .form-field__select:focus {
+    box-shadow: 0 0 0 3px var(--color-success-muted);
+}
+
+/* Error field */
+.form-field--error .form-field__input,
+.form-field--error .form-field__textarea,
+.form-field--error .form-field__select {
+    border-color: var(--color-danger-emphasis);
+    background: var(--color-danger-subtle);
+}
+
+.form-field--error .form-field__input:focus,
+.form-field--error .form-field__textarea:focus,
+.form-field--error .form-field__select:focus {
+    box-shadow: 0 0 0 3px var(--color-danger-muted);
+}
+
+/* Warning field */
+.form-field--warning .form-field__input,
+.form-field--warning .form-field__textarea,
+.form-field--warning .form-field__select {
+    border-color: var(--color-attention-emphasis);
+}
+
+.form-field--warning .form-field__input:focus,
+.form-field--warning .form-field__textarea:focus,
+.form-field--warning .form-field__select:focus {
+    box-shadow: 0 0 0 3px var(--color-attention-muted);
+}
+
+/* ==========================================================================
+   Validation Messages
+   ========================================================================== */
+
+.form-field__error {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-danger-fg);
+    margin-top: 0.375rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.form-field__error-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+}
+
+.form-field__error-icon::before {
+    content: '⚠';
+}
+
+.form-field__success {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-success-fg);
+    margin-top: 0.375rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.form-field__success-icon::before {
+    content: '✓';
+}
+
+.form-field__warning {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-attention-fg);
+    margin-top: 0.375rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* ==========================================================================
+   Inline Validation Icons
+   ========================================================================== */
+
+.form-field--with-icon {
+    position: relative;
+}
+
+.form-field--with-icon .form-field__input,
+.form-field--with-icon .form-field__textarea {
+    padding-right: 2.5rem;
+}
+
+.form-field__validation-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.form-field--valid .form-field__validation-icon {
+    color: var(--color-success-fg);
+}
+
+.form-field--valid .form-field__validation-icon::before {
+    content: '✓';
+}
+
+.form-field--error .form-field__validation-icon {
+    color: var(--color-danger-fg);
+}
+
+.form-field--error .form-field__validation-icon::before {
+    content: '✗';
+}
+
+/* ==========================================================================
+   Form Level Messages
+   ========================================================================== */
+
+.form-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    animation: slideInDown 0.3s ease-out;
+}
+
+.form-message--error {
+    background: var(--color-danger-subtle);
+    border: 1px solid var(--color-danger-muted);
+    color: var(--color-danger-fg);
+}
+
+.form-message--success {
+    background: var(--color-success-subtle);
+    border: 1px solid var(--color-success-muted);
+    color: var(--color-success-fg);
+}
+
+.form-message--warning {
+    background: var(--color-attention-subtle);
+    border: 1px solid var(--color-attention-muted);
+    color: var(--color-attention-fg);
+}
+
+.form-message--info {
+    background: var(--color-accent-subtle);
+    border: 1px solid var(--color-accent-muted);
+    color: var(--color-accent-fg);
+}
+
+.form-message__icon {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+}
+
+.form-message__content {
+    flex: 1;
+}
+
+.form-message__title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.form-message__text {
+    font-size: 0.875rem;
+}
+
+.form-message__list {
+    margin: 0.5rem 0 0 1.25rem;
+    padding: 0;
+    font-size: 0.875rem;
+}
+
+.form-message__list li {
+    margin-bottom: 0.25rem;
+}
+
+/* ==========================================================================
+   Real-time Validation Indicators
+   ========================================================================== */
+
+.validation-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.validation-status--valid {
+    background: var(--color-success-subtle);
+    color: var(--color-success-fg);
+}
+
+.validation-status--invalid {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-fg);
+}
+
+.validation-status--checking {
+    background: var(--color-accent-subtle);
+    color: var(--color-accent-fg);
+}
+
+/* Spinner for checking state */
+.validation-status--checking .validation-status__icon {
+    animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   Required Field Indicator
+   ========================================================================== */
+
+.required-indicator {
+    color: var(--color-danger-fg);
+    margin-left: 0.125rem;
+}
+
+/* ==========================================================================
+   Tooltip Errors
+   ========================================================================== */
+
+.form-tooltip {
+    position: absolute;
+    z-index: 100;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-danger-emphasis);
+    color: white;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    max-width: 250px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.form-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 1rem;
+    border: 6px solid transparent;
+    border-bottom-color: var(--color-danger-emphasis);
+}
+
+/* ==========================================================================
+   Submit Button States
+   ========================================================================== */
+
+.btn-submit {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.btn-submit--loading {
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn-submit--loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.btn-submit--success {
+    background: var(--color-success-emphasis) !important;
+}
+
+.btn-submit--error {
+    background: var(--color-danger-emphasis) !important;
+    animation: shake 0.4s ease-in-out;
+}

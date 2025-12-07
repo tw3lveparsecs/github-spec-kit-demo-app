@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Spec Kit Demo</title>
+  
+  <!-- Primer CSS (GitHub Design System) -->
+  <link href="https://unpkg.com/@primer/css@21.0.7/dist/primer.css" rel="stylesheet">
+  
+  <!-- Alpine.js for reactivity (15KB) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+  
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/components/workflow-stepper.css">
+  <link rel="stylesheet" href="/css/components/artifact-viewer.css">
+  <link rel="stylesheet" href="/css/components/constitution-panel.css">
+  <link rel="stylesheet" href="/css/components/check-badge.css">
+  <link rel="stylesheet" href="/css/components/custom-scenario.css">
+  <link rel="stylesheet" href="/css/components/form-validation.css">
+  <link rel="stylesheet" href="/css/components/presenter-notes.css">
+</head>
+<body>
+  <!-- Skip Link for Keyboard Navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <div id="app" x-data="demoApp()" x-cloak>
+    <!-- Header -->
+    <header class="Header" role="banner">
+      <div class="Header-item">
+        <h1 class="Header-title">GitHub Spec Kit Demo</h1>
+      </div>
+      <div class="Header-item Header-item--full"></div>
+      <div class="Header-item">
+        <button class="btn btn-danger" 
+                @click="resetDemo()" 
+                :disabled="isLoading"
+                aria-label="Reset demo to initial state"
+                :aria-busy="isLoading">
+          <span x-show="!isLoading">Reset Demo</span>
+          <span x-show="isLoading" role="status">Resetting...</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="container-xl p-4" role="main">
+      <div class="Box">
+        <div class="Box-header">
+          <h2 class="Box-title">Welcome to the Spec Kit Demo</h2>
+        </div>
+        <div class="Box-body">
+          <p class="mb-3">
+            This interactive demo showcases the GitHub Spec Kit workflow for building 
+            feature specifications and implementation plans.
+          </p>
+          
+          <!-- Scenario Selection -->
+          <section id="scenario-selector" class="mt-4" aria-labelledby="scenario-heading">
+            <div class="d-flex flex-justify-between flex-items-center mb-2">
+              <h3 id="scenario-heading">Select a Demo Scenario</h3>
+              <button class="btn btn-primary" 
+                      @click="showCustomScenarioForm = true"
+                      aria-haspopup="dialog">
+                <span class="mr-1" aria-hidden="true">➕</span>
+                Create Custom
+              </button>
+            </div>
+            <div class="d-flex flex-wrap" style="gap: 1rem;" role="list" aria-label="Available scenarios">
+              <template x-for="scenario in scenarios" :key="scenario.id">
+                <div class="Box col-12 col-md-5" 
+                     style="cursor: pointer;" 
+                     @click="selectScenario(scenario)"
+                     @keydown.enter="selectScenario(scenario)"
+                     @keydown.space.prevent="selectScenario(scenario)"
+                     :class="{'Box--blue': selectedScenario && selectedScenario.id === scenario.id}"
+                     role="listitem"
+                     tabindex="0"
+                     :aria-selected="selectedScenario && selectedScenario.id === scenario.id"
+                     :aria-label="'Scenario: ' + scenario.title + '. ' + scenario.description">
+                  <div class="Box-body">
+                    <div class="d-flex flex-justify-between flex-items-start">
+                      <h4 class="mb-2" x-text="scenario.title"></h4>
+                      <span x-show="scenario.is_custom" class="Label Label--success" aria-label="Custom scenario">Custom</span>
+                    </div>
+                    <p class="text-small text-gray" x-text="scenario.description"></p>
+                    <span class="Label Label--accent mt-2" x-text="scenario.domain" aria-label="Domain category"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+            
+            <div x-show="scenarios.length === 0 && !isLoading" class="blankslate" role="status">
+              <p class="text-gray">Loading scenarios...</p>
+            </div>
+          </section>
+          
+          <!-- Custom Scenario Modal -->
+          <div x-show="showCustomScenarioForm" 
+               class="custom-scenario-modal"
+               @keydown.escape.window="showCustomScenarioForm = false"
+               x-transition:enter="fade-in"
+               x-transition:leave="fade-out">
+            <div class="custom-scenario-modal__content custom-scenario-form" @click.stop>
+              <div class="custom-scenario-form__header">
+                <h3 class="custom-scenario-form__title">Create Custom Scenario</h3>
+                <p class="custom-scenario-form__subtitle">Create a demo scenario tailored to your audience's industry</p>
+              </div>
+              
+              <!-- Form Error Message -->
+              <div x-show="customScenarioError" class="form-message form-message--error mb-3">
+                <span class="form-message__icon">⚠️</span>
+                <div class="form-message__content">
+                  <div class="form-message__title">Validation Error</div>
+                  <div class="form-message__text" x-text="customScenarioError"></div>
+                </div>
+              </div>
+              
+              <!-- Title Field -->
+              <div class="form-field" :class="{'form-field--error': customScenarioErrors.title}">
+                <label class="form-field__label form-field__label--required">Feature Title</label>
+                <input type="text" 
+                       class="form-field__input" 
+                       x-model="customScenarioData.title"
+                       placeholder="e.g., Real-time Analytics Dashboard"
+                       maxlength="100">
+                <div class="d-flex flex-justify-between">
+                  <span class="form-field__error" x-show="customScenarioErrors.title" x-text="customScenarioErrors.title"></span>
+                  <span class="form-field__char-count" 
+                        :class="{'form-field__char-count--warning': customScenarioData.title.length > 80}"
+                        x-text="`${customScenarioData.title.length}/100`"></span>
+                </div>
+              </div>
+              
+              <!-- Description Field -->
+              <div class="form-field" :class="{'form-field--error': customScenarioErrors.description}">
+                <label class="form-field__label form-field__label--required">Description</label>
+                <textarea class="form-field__textarea" 
+                          x-model="customScenarioData.description"
+                          placeholder="Brief overview of the feature (20-500 characters)"
+                          rows="3"
+                          maxlength="500"></textarea>
+                <div class="d-flex flex-justify-between">
+                  <span class="form-field__error" x-show="customScenarioErrors.description" x-text="customScenarioErrors.description"></span>
+                  <span class="form-field__char-count" 
+                        :class="{'form-field__char-count--warning': customScenarioData.description.length > 400, 'form-field__char-count--error': customScenarioData.description.length < 20 && customScenarioData.description.length > 0}"
+                        x-text="`${customScenarioData.description.length}/500`"></span>
+                </div>
+              </div>
+              
+              <!-- Domain Field -->
+              <div class="form-field" :class="{'form-field--error': customScenarioErrors.domain}">
+                <label class="form-field__label form-field__label--required">Industry / Domain</label>
+                <input type="text" 
+                       class="form-field__input" 
+                       x-model="customScenarioData.domain"
+                       placeholder="e.g., Healthcare, Finance, Retail"
+                       maxlength="50">
+                <span class="form-field__error" x-show="customScenarioErrors.domain" x-text="customScenarioErrors.domain"></span>
+              </div>
+              
+              <!-- Feature Description (Optional) -->
+              <div class="form-field">
+                <label class="form-field__label">Detailed Feature Description (Optional)</label>
+                <textarea class="form-field__textarea" 
+                          x-model="customScenarioData.feature_description"
+                          placeholder="Provide additional context about the feature requirements, user stories, or technical constraints..."
+                          rows="4"
+                          maxlength="2000"></textarea>
+                <span class="form-field__hint">This will be used as the initial prompt for the workflow</span>
+              </div>
+              
+              <!-- Tech Stack (Optional) -->
+              <div class="form-field">
+                <label class="form-field__label">Tech Stack (Optional)</label>
+                <div class="tech-stack-input">
+                  <template x-for="(tech, index) in customScenarioData.tech_stack" :key="index">
+                    <span class="tech-stack-tag">
+                      <span x-text="tech"></span>
+                      <button type="button" class="tech-stack-tag__remove" @click="removeTechStack(index)">×</button>
+                    </span>
+                  </template>
+                  <input type="text" 
+                         class="tech-stack-input__field"
+                         x-model="techStackInput"
+                         @keydown.enter.prevent="addTechStack()"
+                         @keydown.comma.prevent="addTechStack()"
+                         placeholder="Type and press Enter to add...">
+                </div>
+                <span class="form-field__hint">Add technologies like Python, React, PostgreSQL</span>
+              </div>
+              
+              <!-- Form Actions -->
+              <div class="form-actions">
+                <button type="button" 
+                        class="form-actions__button form-actions__button--secondary"
+                        @click="showCustomScenarioForm = false; resetCustomScenarioForm()">
+                  Cancel
+                </button>
+                <button type="button" 
+                        class="form-actions__button form-actions__button--primary"
+                        :class="{'btn-submit--loading': isCreatingScenario}"
+                        :disabled="isCreatingScenario"
+                        @click="createCustomScenario()">
+                  Create Scenario
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Workflow Stepper (shown after scenario selection) -->
+      <div x-show="selectedScenario && workflowState" class="Box mt-4 fade-in">
+        <div class="Box-header">
+          <h2 class="Box-title">Workflow Progress</h2>
+        </div>
+        <div class="Box-body">
+          <div class="workflow-stepper">
+            <!-- Stepper Header -->
+            <div class="stepper-header">
+              <h3 class="stepper-title">Interactive Workflow Walkthrough</h3>
+              <span class="stepper-progress-label" x-show="workflowState" x-text="`Phase ${(workflowState?.phase_index || 0) + 1} of 5`"></span>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="stepper-progress">
+              <div class="stepper-progress-fill" :style="`width: ${workflowState ? Math.round(((workflowState.phase_index || 0) / 4) * 100) : 0}%`"></div>
+            </div>
+            
+            <!-- Phase Steps -->
+            <div class="stepper-phases">
+              <template x-for="(phase, index) in [{ name: 'specify', display: 'Specification', icon: '📝' }, { name: 'clarify', display: 'Clarification', icon: '💬' }, { name: 'plan', display: 'Planning', icon: '🗺️' }, { name: 'tasks', display: 'Tasks', icon: '✅' }, { name: 'implement', display: 'Implementation', icon: '⚙️' }]" :key="phase.name">
+                <div class="phase-step" 
+                     :class="index < (workflowState?.phase_index || 0) ? 'phase-completed' : index === (workflowState?.phase_index || 0) ? 'phase-current' : 'phase-upcoming'" 
+                     @click="jumpToPhase(phase.name)">
+                  <div class="phase-icon">
+                    <span x-text="phase.icon"></span>
+                  </div>
+                  <div class="phase-label">
+                    <p class="phase-name" x-text="phase.display"></p>
+                    <span class="phase-order" x-text="`Step ${index + 1}`"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+            
+            <!-- Navigation Actions -->
+            <div class="stepper-actions">
+              <div class="stepper-nav-buttons">
+                <button class="btn-phase-nav btn-phase-prev" 
+                        @click="previousPhase()" 
+                        :disabled="!workflowState || workflowState.phase_index === 0">
+                  Previous
+                </button>
+                <button class="btn-phase-nav btn-phase-next" 
+                        @click="nextPhase()" 
+                        :disabled="!workflowState || workflowState.phase_index === 4">
+                  Next
+                </button>
+              </div>
+              
+              <div class="phase-jump-dropdown">
+                <select class="phase-jump-select" @change="jumpToPhase($event.target.value); $event.target.value = ''">
+                  <option value="">Jump to phase...</option>
+                  <option value="specify">Specification</option>
+                  <option value="clarify">Clarification</option>
+                  <option value="plan">Planning</option>
+                  <option value="tasks">Tasks</option>
+                  <option value="implement">Implementation</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Artifact Viewer (shown when artifact is generated) -->
+      <div x-show="selectedScenario && currentArtifact" class="mt-4 slide-in-right">
+        <div class="artifact-viewer" :class="{'is-collapsed': !artifactExpanded}">
+          <!-- Artifact Header -->
+          <div class="artifact-header" @click="artifactExpanded = !artifactExpanded">
+            <div class="artifact-title-section">
+              <span class="artifact-type-icon" x-text="getArtifactIcon()"></span>
+              <h3 class="artifact-title" x-text="getArtifactTitle()"></h3>
+            </div>
+            
+            <div class="artifact-meta">
+              <div class="artifact-meta-item" x-show="currentArtifact?.generation_duration_ms">
+                <span class="artifact-meta-label">⏱️</span>
+                <span class="artifact-meta-value" x-text="currentArtifact.generation_duration_ms + 'ms'"></span>
+              </div>
+              <div class="artifact-meta-item" x-show="currentArtifact?.tokens_used">
+                <span class="artifact-meta-label">🔤</span>
+                <span class="artifact-meta-value" x-text="currentArtifact.tokens_used + ' tokens'"></span>
+              </div>
+            </div>
+            
+            <button class="artifact-toggle-btn" type="button">
+              <span class="artifact-toggle-icon" x-text="artifactExpanded ? '▼' : '▲'"></span>
+            </button>
+          </div>
+          
+          <!-- Artifact Content -->
+          <div class="artifact-content">
+            <div class="artifact-body">
+              <!-- Loading State -->
+              <div x-show="isGeneratingArtifact" class="artifact-loading">
+                <div class="artifact-loading-spinner"></div>
+                <span class="artifact-loading-text">Generating artifact...</span>
+              </div>
+              
+              <!-- Content Display -->
+              <div x-show="!isGeneratingArtifact && currentArtifact" class="artifact-markdown" x-html="currentArtifact?.content_html || currentArtifact?.content_markdown"></div>
+              
+              <!-- Empty State -->
+              <div x-show="!isGeneratingArtifact && !currentArtifact" class="artifact-empty">
+                <div class="artifact-empty-icon">📄</div>
+                <p class="artifact-empty-message">No artifact generated yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Status Messages -->
+      <div x-show="statusMessage" class="flash flash-success mt-3" x-text="statusMessage"></div>
+      <div x-show="errorMessage" class="flash flash-error mt-3" x-text="errorMessage"></div>
+      
+      <!-- Constitution Panel (shown when workflow is active) -->
+      <div x-show="selectedScenario && workflowState" 
+           class="Box mt-4 fade-in" 
+           x-data="constitutionPanel()">
+        <div class="Box-header d-flex flex-justify-between flex-items-center">
+          <h2 class="Box-title">
+            <span class="mr-2">📜</span>
+            Constitution Principles
+          </h2>
+          <div class="d-flex flex-items-center" style="gap: 1rem;">
+            <!-- Constitution Check Summary -->
+            <div class="check-badge-counter" x-show="checks.length > 0">
+              <span class="check-badge check-badge--passed check-badge--compact" x-show="getCheckSummary().passed > 0">
+                <span class="check-badge-icon"></span>
+                <span x-text="getCheckSummary().passed"></span>
+              </span>
+              <span class="check-badge check-badge--failed check-badge--compact" x-show="getCheckSummary().failed > 0">
+                <span class="check-badge-icon"></span>
+                <span x-text="getCheckSummary().failed"></span>
+              </span>
+              <span class="check-badge check-badge--warning check-badge--compact" x-show="getCheckSummary().warning > 0">
+                <span class="check-badge-icon"></span>
+                <span x-text="getCheckSummary().warning"></span>
+              </span>
+            </div>
+            <button class="btn btn-sm" @click="loadPrinciples()" :disabled="isLoading">
+              <span x-show="!isLoading">Load Principles</span>
+              <span x-show="isLoading">Loading...</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="Box-body constitution-panel">
+          <!-- Loading State -->
+          <div x-show="isLoading" class="loading-spinner">
+            <svg class="spinner-icon" viewBox="0 0 50 50">
+              <circle class="spinner-circle" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4"></circle>
+            </svg>
+            <span class="spinner-text">Loading constitution principles...</span>
+          </div>
+          
+          <!-- Principles List -->
+          <div x-show="!isLoading && principles.length > 0" class="principles-container">
+            <template x-for="principle in principles" :key="principle.principle_id">
+              <div class="principle-card" 
+                   :class="{'principle-card--expanded': expandedPrinciples[principle.principle_id]}">
+                <div class="principle-header" @click="togglePrinciple(principle.principle_id)">
+                  <div class="principle-icon" x-text="getPrincipleIcon(principle.category)"></div>
+                  <div class="principle-info">
+                    <h4 class="principle-name" x-text="principle.name"></h4>
+                    <span class="principle-category Label Label--secondary" x-text="principle.category"></span>
+                  </div>
+                  <div class="principle-priority">
+                    <span class="Label" 
+                          :class="principle.priority >= 4 ? 'Label--danger' : principle.priority >= 3 ? 'Label--attention' : 'Label--success'"
+                          x-text="`P${principle.priority}`"></span>
+                  </div>
+                  <div class="principle-toggle">
+                    <span x-text="expandedPrinciples[principle.principle_id] ? '▼' : '▶'"></span>
+                  </div>
+                </div>
+                
+                <div class="principle-body" x-show="expandedPrinciples[principle.principle_id]" x-collapse>
+                  <p class="principle-description" x-text="principle.description"></p>
+                  
+                  <div class="principle-examples" x-show="principle.examples && principle.examples.length > 0">
+                    <h5 class="principle-examples-title">Examples</h5>
+                    <ul class="principle-examples-list">
+                      <template x-for="example in principle.examples" :key="example">
+                        <li x-text="example"></li>
+                      </template>
+                    </ul>
+                  </div>
+                  
+                  <div class="principle-enforcement">
+                    <span class="Label" 
+                          :class="principle.enforcement_level === 'required' ? 'Label--danger' : principle.enforcement_level === 'recommended' ? 'Label--attention' : 'Label--secondary'"
+                          x-text="principle.enforcement_level"></span>
+                  </div>
+                </div>
+                
+                <!-- Check Result for this principle -->
+                <div class="principle-check-result" 
+                     x-show="getCheckForPrinciple(principle.principle_id)"
+                     :class="'check-result--' + (getCheckForPrinciple(principle.principle_id)?.status || 'pending')">
+                  <template x-if="getCheckForPrinciple(principle.principle_id)">
+                    <div class="check-result-content">
+                      <span class="check-badge" 
+                            :class="'check-badge--' + getCheckForPrinciple(principle.principle_id).status">
+                        <span class="check-badge-icon"></span>
+                        <span x-text="getCheckForPrinciple(principle.principle_id).status"></span>
+                      </span>
+                      <span class="check-result-message" x-text="getCheckForPrinciple(principle.principle_id).message"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+          
+          <!-- Empty State -->
+          <div x-show="!isLoading && principles.length === 0" class="blankslate">
+            <div class="blankslate-icon">📜</div>
+            <h3 class="blankslate-heading">No Principles Loaded</h3>
+            <p>Click "Load Principles" to view the constitution guiding principles.</p>
+          </div>
+          
+          <!-- Run Check Button -->
+          <div x-show="!isLoading && principles.length > 0 && $root.currentArtifact" class="constitution-actions mt-3">
+            <button class="btn btn-primary" 
+                    @click="runConstitutionCheck($root.currentArtifact?.artifact_id)"
+                    :disabled="isLoading">
+              <span x-show="!isLoading">Run Constitution Check</span>
+              <span x-show="isLoading">Checking...</span>
+            </button>
+            <span x-show="lastCheckTime" class="text-small text-gray ml-2">
+              Last checked: <span x-text="lastCheckTime"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application JavaScript -->
+  <script src="/js/utils/animation-helpers.js" type="module"></script>
+  <script src="/js/components/workflow-stepper.js" type="module"></script>
+  <script src="/js/components/artifact-viewer.js" type="module"></script>
+  <script src="/js/components/constitution-panel.js"></script>
+  <script src="/js/components/presenter-notes.js"></script>
+  <script src="/js/services/api-client.js"></script>
+  <script src="/js/services/state-manager.js"></script>
+  <script src="/js/main.js"></script>
+  
+  <!-- Presenter Notes Floating Button and Panel -->
+  <div x-data="presenterNotes()" class="presenter-notes-container">
+    <!-- Toggle Button -->
+    <button class="presenter-notes-toggle" 
+            @click="togglePanel()" 
+            :title="isPanelVisible ? 'Hide Presenter Notes' : 'Show Presenter Notes'">
+      <svg class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="20" height="20">
+        <path fill-rule="evenodd" d="M0 1.75A.75.75 0 01.75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0111.006 1h4.245a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75h-4.507a2.25 2.25 0 00-1.591.659l-.622.621a.75.75 0 01-1.06 0l-.622-.621A2.25 2.25 0 005.258 13H.75a.75.75 0 01-.75-.75V1.75zm7.251 10.324l.004-5.073-.002-2.253A2.25 2.25 0 005.003 2.5H1.5v9h3.757a3.75 3.75 0 011.994.574zM8.755 4.75l-.004 7.322a3.752 3.752 0 011.992-.572H14.5v-9h-3.495a2.25 2.25 0 00-2.25 2.25z" fill="currentColor"/>
+      </svg>
+      <span x-show="notes.length > 0" class="presenter-notes-badge" x-text="notes.length"></span>
+    </button>
+    
+    <!-- Notes Panel -->
+    <div class="presenter-notes-panel" :class="{'hidden': !isPanelVisible}">
+      <!-- Header -->
+      <div class="presenter-notes-header">
+        <div class="presenter-notes-title">
+          <svg class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+            <path fill-rule="evenodd" d="M0 1.75A.75.75 0 01.75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0111.006 1h4.245a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75h-4.507a2.25 2.25 0 00-1.591.659l-.622.621a.75.75 0 01-1.06 0l-.622-.621A2.25 2.25 0 005.258 13H.75a.75.75 0 01-.75-.75V1.75z" fill="currentColor"/>
+          </svg>
+          Presenter Notes
+        </div>
+        <span class="presenter-notes-context" x-text="getContextDisplay()"></span>
+        <button class="presenter-notes-close" @click="togglePanel()">
+          <svg class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+            <path fill-rule="evenodd" d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Content -->
+      <div class="presenter-notes-content">
+        <!-- Loading -->
+        <div x-show="isLoading" class="presenter-notes-loading">
+          <div class="spinner"></div>
+        </div>
+        
+        <!-- Empty State -->
+        <div x-show="!isLoading && !hasNotes()" class="presenter-notes-empty">
+          <svg class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="32" height="32">
+            <path fill-rule="evenodd" d="M0 1.75A.75.75 0 01.75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0111.006 1h4.245a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75h-4.507a2.25 2.25 0 00-1.591.659l-.622.621a.75.75 0 01-1.06 0l-.622-.621A2.25 2.25 0 005.258 13H.75a.75.75 0 01-.75-.75V1.75z" fill="currentColor"/>
+          </svg>
+          <p>No presenter notes for this context.</p>
+        </div>
+        
+        <!-- Notes List -->
+        <template x-for="note in notes" :key="note.note_id">
+          <div class="presenter-note-card">
+            <div class="presenter-note-header" @click="toggleNote(note.note_id)">
+              <div class="emphasis-indicator" :class="getEmphasisClass(note.emphasis_level)"></div>
+              <svg class="octicon presenter-note-expand" 
+                   :class="{'expanded': isNoteExpanded(note.note_id)}"
+                   xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12">
+                <path fill-rule="evenodd" d="M6.22 3.22a.75.75 0 011.06 0l4.25 4.25a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 010-1.06z" fill="currentColor"/>
+              </svg>
+              <span class="presenter-note-title" x-text="note.title"></span>
+              <span x-show="note.timing" 
+                    class="timing-badge" 
+                    :class="getTimingClass(note.timing)"
+                    x-text="getTimingText(note.timing)"></span>
+            </div>
+            <div class="presenter-note-body" :class="{'expanded': isNoteExpanded(note.note_id)}">
+              <p class="presenter-note-content" x-text="note.content"></p>
+              <ul x-show="note.tips && note.tips.length > 0" class="presenter-note-tips">
+                <template x-for="tip in note.tips" :key="tip">
+                  <li>
+                    <svg class="octicon tip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12">
+                      <path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm9 3a1 1 0 11-2 0 1 1 0 012 0zm-.25-6.25a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0v-3.5z" fill="currentColor"/>
+                    </svg>
+                    <span x-text="tip"></span>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast Notifications Utility -->
+  <script src="/js/utils/toast.js"></script>
+</body>
+</html>

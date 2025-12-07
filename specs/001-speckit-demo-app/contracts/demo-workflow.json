@@ -1,0 +1,346 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Demo Workflow State Machine",
+  "description": "Defines the state transitions and rules for the Spec Kit demo workflow",
+  "type": "object",
+  "required": ["version", "states", "transitions", "rules"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "states": {
+      "type": "object",
+      "description": "All possible workflow states",
+      "required": ["demo_ready", "scenario_selected", "specify", "clarify", "plan", "tasks", "implement", "completed"],
+      "properties": {
+        "demo_ready": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Demo Ready" },
+            "description": { "const": "Initial state, no scenario selected" },
+            "is_terminal": { "const": false },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["select_scenario", "create_custom", "view_constitution"] }
+            }
+          }
+        },
+        "scenario_selected": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Scenario Selected" },
+            "description": { "const": "Demo scenario chosen, ready to start workflow" },
+            "is_terminal": { "const": false },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["start_workflow", "change_scenario", "reset"] }
+            }
+          }
+        },
+        "specify": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Specification" },
+            "description": { "const": "Generating feature specification (spec.md)" },
+            "phase_name": { "const": "specify" },
+            "command": { "const": "/speckit.specify" },
+            "artifact_type": { "const": "spec" },
+            "is_terminal": { "const": false },
+            "input_required": { "const": false },
+            "estimated_duration_seconds": { "const": 3 },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["advance", "jump_to_phase", "reset"] }
+            }
+          }
+        },
+        "clarify": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Clarification" },
+            "description": { "const": "Clarifying ambiguous requirements" },
+            "phase_name": { "const": "clarify" },
+            "command": { "const": "/speckit.clarify" },
+            "artifact_type": { "const": null },
+            "is_terminal": { "const": false },
+            "input_required": { "const": true },
+            "clarification_questions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 5
+            },
+            "estimated_duration_seconds": { "const": 2 },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["answer_questions", "skip", "jump_to_phase", "reset"] }
+            }
+          }
+        },
+        "plan": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Planning" },
+            "description": { "const": "Generating implementation plan (plan.md) with constitution checks" },
+            "phase_name": { "const": "plan" },
+            "command": { "const": "/speckit.plan" },
+            "artifact_type": { "const": "plan" },
+            "is_terminal": { "const": false },
+            "input_required": { "const": false },
+            "estimated_duration_seconds": { "const": 5 },
+            "has_constitution_checks": { "const": true },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["advance", "view_constitution", "jump_to_phase", "reset"] }
+            }
+          }
+        },
+        "tasks": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Task Breakdown" },
+            "description": { "const": "Generating task list (tasks.md)" },
+            "phase_name": { "const": "tasks" },
+            "command": { "const": "/speckit.tasks" },
+            "artifact_type": { "const": "tasks" },
+            "is_terminal": { "const": false },
+            "input_required": { "const": false },
+            "estimated_duration_seconds": { "const": 4 },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["advance", "jump_to_phase", "reset"] }
+            }
+          }
+        },
+        "implement": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Implementation" },
+            "description": { "const": "Implementation phase (simulated)" },
+            "phase_name": { "const": "implement" },
+            "command": { "const": "/speckit.implement" },
+            "artifact_type": { "const": null },
+            "is_terminal": { "const": false },
+            "input_required": { "const": false },
+            "estimated_duration_seconds": { "const": 2 },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["complete", "jump_to_phase", "reset"] }
+            }
+          }
+        },
+        "completed": {
+          "type": "object",
+          "properties": {
+            "display_name": { "const": "Workflow Complete" },
+            "description": { "const": "All workflow phases completed" },
+            "is_terminal": { "const": true },
+            "actions_available": {
+              "type": "array",
+              "items": { "enum": ["restart", "change_scenario", "reset"] }
+            }
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "description": "Valid state transitions",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "trigger", "conditions"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "enum": ["demo_ready", "scenario_selected", "specify", "clarify", "plan", "tasks", "implement", "completed"]
+          },
+          "to": {
+            "type": "string",
+            "enum": ["demo_ready", "scenario_selected", "specify", "clarify", "plan", "tasks", "implement", "completed"]
+          },
+          "trigger": {
+            "type": "string",
+            "description": "Action that causes this transition"
+          },
+          "conditions": {
+            "type": "array",
+            "description": "Conditions that must be met for transition",
+            "items": { "type": "string" }
+          },
+          "side_effects": {
+            "type": "array",
+            "description": "Actions performed during transition",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "default": [
+        {
+          "from": "demo_ready",
+          "to": "scenario_selected",
+          "trigger": "select_scenario",
+          "conditions": ["valid_scenario_id"],
+          "side_effects": ["load_scenario_data", "initialize_workflow_phases"]
+        },
+        {
+          "from": "demo_ready",
+          "to": "scenario_selected",
+          "trigger": "create_custom_scenario",
+          "conditions": ["valid_custom_scenario_data"],
+          "side_effects": ["save_custom_scenario", "initialize_workflow_phases"]
+        },
+        {
+          "from": "scenario_selected",
+          "to": "specify",
+          "trigger": "start_workflow",
+          "conditions": [],
+          "side_effects": ["set_phase_in_progress", "start_artifact_generation"]
+        },
+        {
+          "from": "specify",
+          "to": "clarify",
+          "trigger": "advance",
+          "conditions": ["artifact_generated"],
+          "side_effects": ["mark_phase_completed", "set_next_phase_in_progress", "generate_clarification_questions"]
+        },
+        {
+          "from": "clarify",
+          "to": "plan",
+          "trigger": "advance",
+          "conditions": ["questions_answered_or_skipped"],
+          "side_effects": ["mark_phase_completed", "set_next_phase_in_progress", "start_artifact_generation"]
+        },
+        {
+          "from": "plan",
+          "to": "tasks",
+          "trigger": "advance",
+          "conditions": ["artifact_generated", "constitution_checks_passed_or_justified"],
+          "side_effects": ["mark_phase_completed", "set_next_phase_in_progress", "start_artifact_generation"]
+        },
+        {
+          "from": "tasks",
+          "to": "implement",
+          "trigger": "advance",
+          "conditions": ["artifact_generated"],
+          "side_effects": ["mark_phase_completed", "set_next_phase_in_progress"]
+        },
+        {
+          "from": "implement",
+          "to": "completed",
+          "trigger": "complete",
+          "conditions": [],
+          "side_effects": ["mark_phase_completed", "log_completion"]
+        },
+        {
+          "from": "*",
+          "to": "demo_ready",
+          "trigger": "reset",
+          "conditions": [],
+          "side_effects": ["clear_all_state", "clear_local_storage", "reload_initial_scenarios"]
+        },
+        {
+          "from": "specify",
+          "to": "*",
+          "trigger": "jump_to_phase",
+          "conditions": ["target_phase_valid"],
+          "side_effects": ["mark_skipped_phases", "set_target_phase_in_progress"]
+        },
+        {
+          "from": "clarify",
+          "to": "*",
+          "trigger": "jump_to_phase",
+          "conditions": ["target_phase_valid"],
+          "side_effects": ["mark_skipped_phases", "set_target_phase_in_progress"]
+        },
+        {
+          "from": "plan",
+          "to": "*",
+          "trigger": "jump_to_phase",
+          "conditions": ["target_phase_valid"],
+          "side_effects": ["mark_skipped_phases", "set_target_phase_in_progress"]
+        },
+        {
+          "from": "tasks",
+          "to": "*",
+          "trigger": "jump_to_phase",
+          "conditions": ["target_phase_valid"],
+          "side_effects": ["mark_skipped_phases", "set_target_phase_in_progress"]
+        },
+        {
+          "from": "implement",
+          "to": "*",
+          "trigger": "jump_to_phase",
+          "conditions": ["target_phase_valid"],
+          "side_effects": ["mark_skipped_phases", "set_target_phase_in_progress"]
+        }
+      ]
+    },
+    "rules": {
+      "type": "object",
+      "description": "Business rules and constraints",
+      "properties": {
+        "constitution_enforcement": {
+          "type": "object",
+          "properties": {
+            "check_during_phase": { "const": "plan" },
+            "blocking_violations_prevent_advance": { "const": true },
+            "justified_violations_allow_advance": { "const": true },
+            "principles_checked": {
+              "type": "array",
+              "items": { "enum": ["code-quality", "testing", "ux", "performance"] }
+            }
+          }
+        },
+        "artifact_generation": {
+          "type": "object",
+          "properties": {
+            "animation_duration_ms": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 10000,
+              "description": "Simulated typing animation duration"
+            },
+            "typing_speed_chars_per_second": {
+              "type": "integer",
+              "default": 50,
+              "description": "Characters revealed per second during animation"
+            },
+            "cache_generated_artifacts": { "const": true }
+          }
+        },
+        "phase_navigation": {
+          "type": "object",
+          "properties": {
+            "allow_skip_forward": { "const": true },
+            "allow_skip_backward": { "const": true },
+            "preserve_generated_artifacts_on_skip": { "const": true },
+            "confirmation_required_for_destructive_actions": {
+              "type": "array",
+              "items": { "enum": ["reset", "change_scenario"] }
+            }
+          }
+        },
+        "custom_scenarios": {
+          "type": "object",
+          "properties": {
+            "max_custom_scenarios_per_session": {
+              "type": "integer",
+              "default": 10,
+              "description": "Limit to prevent localStorage overflow"
+            },
+            "persist_across_sessions": { "const": true },
+            "validation_required_before_save": { "const": true }
+          }
+        },
+        "performance": {
+          "type": "object",
+          "properties": {
+            "api_response_target_ms": { "const": 100 },
+            "ui_interaction_target_ms": { "const": 50 },
+            "reset_operation_target_ms": { "const": 5000 }
+          }
+        }
+      }
+    }
+  }
+}

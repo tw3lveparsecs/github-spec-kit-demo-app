@@ -1,0 +1,435 @@
+/**
+ * Artifact Viewer Component Styles
+ * 
+ * Styles for displaying generated artifacts (spec, plan, tasks) with
+ * syntax highlighting and expand/collapse functionality.
+ */
+
+/* ==========================================================================
+   Artifact Viewer Container
+   ========================================================================== */
+
+.artifact-viewer {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-canvas-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease-out;
+}
+
+.artifact-viewer.is-empty {
+    display: none;
+}
+
+/* ==========================================================================
+   Artifact Header
+   ========================================================================== */
+
+.artifact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--color-canvas-default);
+    border-bottom: 1px solid var(--color-border-default);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease-out;
+}
+
+.artifact-header:hover {
+    background: var(--color-canvas-subtle);
+}
+
+.artifact-title-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.artifact-type-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.artifact-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-fg-default);
+    margin: 0;
+}
+
+.artifact-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--color-fg-muted);
+}
+
+.artifact-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.artifact-meta-label {
+    font-weight: 500;
+}
+
+.artifact-meta-value {
+    font-weight: 600;
+    color: var(--color-fg-default);
+}
+
+.artifact-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+}
+
+.artifact-toggle-btn:hover {
+    background: var(--color-btn-hover-bg);
+    color: var(--color-fg-default);
+}
+
+.artifact-toggle-icon {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease-out;
+}
+
+.artifact-viewer.is-collapsed .artifact-toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* ==========================================================================
+   Artifact Content
+   ========================================================================== */
+
+.artifact-content {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.artifact-viewer.is-collapsed .artifact-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.artifact-body {
+    padding: 1.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--color-fg-default);
+}
+
+/* ==========================================================================
+   Markdown Content Styles
+   ========================================================================== */
+
+.artifact-markdown h1,
+.artifact-markdown h2,
+.artifact-markdown h3,
+.artifact-markdown h4,
+.artifact-markdown h5,
+.artifact-markdown h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.artifact-markdown h1:first-child,
+.artifact-markdown h2:first-child,
+.artifact-markdown h3:first-child {
+    margin-top: 0;
+}
+
+.artifact-markdown h1 {
+    font-size: 2rem;
+    border-bottom: 1px solid var(--color-border-default);
+    padding-bottom: 0.5rem;
+}
+
+.artifact-markdown h2 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--color-border-muted);
+    padding-bottom: 0.375rem;
+}
+
+.artifact-markdown h3 {
+    font-size: 1.25rem;
+}
+
+.artifact-markdown h4 {
+    font-size: 1.125rem;
+}
+
+.artifact-markdown p {
+    margin-bottom: 1rem;
+}
+
+.artifact-markdown ul,
+.artifact-markdown ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.artifact-markdown li {
+    margin-bottom: 0.5rem;
+}
+
+.artifact-markdown code {
+    padding: 0.2em 0.4em;
+    font-size: 0.875em;
+    background: var(--color-neutral-muted);
+    border-radius: 3px;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+}
+
+.artifact-markdown pre {
+    padding: 1rem;
+    background: var(--color-canvas-inset);
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.artifact-markdown pre code {
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+.artifact-markdown blockquote {
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 4px solid var(--color-accent-emphasis);
+    background: var(--color-canvas-subtle);
+    color: var(--color-fg-muted);
+}
+
+.artifact-markdown table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.artifact-markdown th,
+.artifact-markdown td {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-border-default);
+    text-align: left;
+}
+
+.artifact-markdown th {
+    background: var(--color-canvas-subtle);
+    font-weight: 600;
+}
+
+.artifact-markdown a {
+    color: var(--color-accent-fg);
+    text-decoration: none;
+}
+
+.artifact-markdown a:hover {
+    text-decoration: underline;
+}
+
+.artifact-markdown hr {
+    border: none;
+    border-top: 1px solid var(--color-border-default);
+    margin: 1.5rem 0;
+}
+
+/* ==========================================================================
+   Syntax Highlighting (Pygments github-dark style)
+   ========================================================================== */
+
+.artifact-markdown .codehilite {
+    margin-bottom: 1rem;
+}
+
+.artifact-markdown .codehilite pre {
+    background: #0d1117;
+    color: #c9d1d9;
+}
+
+.artifact-markdown .highlight .hll { background-color: #6e7681; }
+.artifact-markdown .highlight .c { color: #8b949e; font-style: italic; } /* Comment */
+.artifact-markdown .highlight .k { color: #ff7b72; } /* Keyword */
+.artifact-markdown .highlight .o { color: #ff7b72; } /* Operator */
+.artifact-markdown .highlight .ch { color: #8b949e; font-style: italic; } /* Comment.Hashbang */
+.artifact-markdown .highlight .cm { color: #8b949e; font-style: italic; } /* Comment.Multiline */
+.artifact-markdown .highlight .cp { color: #8b949e; font-weight: bold; } /* Comment.Preproc */
+.artifact-markdown .highlight .cpf { color: #8b949e; font-style: italic; } /* Comment.PreprocFile */
+.artifact-markdown .highlight .c1 { color: #8b949e; font-style: italic; } /* Comment.Single */
+.artifact-markdown .highlight .cs { color: #8b949e; font-weight: bold; } /* Comment.Special */
+.artifact-markdown .highlight .kc { color: #79c0ff; } /* Keyword.Constant */
+.artifact-markdown .highlight .kd { color: #ff7b72; } /* Keyword.Declaration */
+.artifact-markdown .highlight .kn { color: #ff7b72; } /* Keyword.Namespace */
+.artifact-markdown .highlight .kp { color: #79c0ff; } /* Keyword.Pseudo */
+.artifact-markdown .highlight .kr { color: #ff7b72; } /* Keyword.Reserved */
+.artifact-markdown .highlight .kt { color: #ff7b72; } /* Keyword.Type */
+.artifact-markdown .highlight .m { color: #a5d6ff; } /* Number */
+.artifact-markdown .highlight .s { color: #a5d6ff; } /* String */
+.artifact-markdown .highlight .na { color: #79c0ff; } /* Name.Attribute */
+.artifact-markdown .highlight .nb { color: #d2a8ff; } /* Name.Builtin */
+.artifact-markdown .highlight .nc { color: #f0883e; } /* Name.Class */
+.artifact-markdown .highlight .no { color: #79c0ff; } /* Name.Constant */
+.artifact-markdown .highlight .nd { color: #d2a8ff; } /* Name.Decorator */
+.artifact-markdown .highlight .ni { color: #ffa657; } /* Name.Entity */
+.artifact-markdown .highlight .ne { color: #f0883e; } /* Name.Exception */
+.artifact-markdown .highlight .nf { color: #d2a8ff; } /* Name.Function */
+.artifact-markdown .highlight .nl { color: #79c0ff; } /* Name.Label */
+.artifact-markdown .highlight .nn { color: #f0883e; } /* Name.Namespace */
+.artifact-markdown .highlight .nt { color: #7ee787; } /* Name.Tag */
+.artifact-markdown .highlight .nv { color: #79c0ff; } /* Name.Variable */
+.artifact-markdown .highlight .ow { color: #ff7b72; } /* Operator.Word */
+.artifact-markdown .highlight .mb { color: #a5d6ff; } /* Number.Bin */
+.artifact-markdown .highlight .mf { color: #a5d6ff; } /* Number.Float */
+.artifact-markdown .highlight .mh { color: #a5d6ff; } /* Number.Hex */
+.artifact-markdown .highlight .mi { color: #a5d6ff; } /* Number.Integer */
+.artifact-markdown .highlight .mo { color: #a5d6ff; } /* Number.Oct */
+.artifact-markdown .highlight .sa { color: #79c0ff; } /* String.Affix */
+.artifact-markdown .highlight .sb { color: #a5d6ff; } /* String.Backtick */
+.artifact-markdown .highlight .sc { color: #a5d6ff; } /* String.Char */
+.artifact-markdown .highlight .dl { color: #79c0ff; } /* String.Delimiter */
+.artifact-markdown .highlight .sd { color: #a5d6ff; } /* String.Doc */
+.artifact-markdown .highlight .s2 { color: #a5d6ff; } /* String.Double */
+.artifact-markdown .highlight .se { color: #79c0ff; } /* String.Escape */
+.artifact-markdown .highlight .sh { color: #a5d6ff; } /* String.Heredoc */
+.artifact-markdown .highlight .si { color: #a5d6ff; } /* String.Interpol */
+.artifact-markdown .highlight .sx { color: #a5d6ff; } /* String.Other */
+.artifact-markdown .highlight .sr { color: #7ee787; } /* String.Regex */
+.artifact-markdown .highlight .s1 { color: #a5d6ff; } /* String.Single */
+.artifact-markdown .highlight .ss { color: #a5d6ff; } /* String.Symbol */
+
+/* ==========================================================================
+   Loading State
+   ========================================================================== */
+
+.artifact-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    gap: 1rem;
+}
+
+.artifact-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border-muted);
+    border-top-color: var(--color-accent-emphasis);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.artifact-loading-text {
+    font-size: 0.875rem;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.artifact-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--color-fg-muted);
+}
+
+.artifact-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.artifact-empty-message {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .artifact-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .artifact-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .artifact-body {
+        padding: 1rem;
+    }
+    
+    .artifact-content {
+        max-height: 400px;
+    }
+    
+    .artifact-markdown h1 {
+        font-size: 1.5rem;
+    }
+    
+    .artifact-markdown h2 {
+        font-size: 1.25rem;
+    }
+    
+    .artifact-markdown h3 {
+        font-size: 1.125rem;
+    }
+    
+    .artifact-markdown pre {
+        font-size: 0.8125rem;
+    }
+}
+
+/* Scrollbar styles */
+.artifact-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.artifact-content::-webkit-scrollbar-track {
+    background: var(--color-canvas-default);
+}
+
+.artifact-content::-webkit-scrollbar-thumb {
+    background: var(--color-border-default);
+    border-radius: 4px;
+}
+
+.artifact-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-muted);
+}
