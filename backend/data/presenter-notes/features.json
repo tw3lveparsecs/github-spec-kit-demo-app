@@ -1,0 +1,88 @@
+{
+  "notes": [
+    {
+      "note_id": "constitution-overview",
+      "title": "Constitution Feature Overview",
+      "content": "The constitution feature ensures all generated artifacts adhere to organizational standards and best practices. It acts as a quality gate throughout the workflow.",
+      "context_type": "feature",
+      "context_id": "constitution",
+      "timing": "before",
+      "tips": [
+        "Explain that constitutions are customizable per organization",
+        "Mention that principles can be added or modified",
+        "Highlight that checks can be extended with custom validators"
+      ],
+      "emphasis_level": 3
+    },
+    {
+      "note_id": "constitution-principles",
+      "title": "Constitution Principles",
+      "content": "Each principle represents a key organizational standard. Principles are grouped by category: security, quality, performance, and maintainability.",
+      "context_type": "feature",
+      "context_id": "constitution",
+      "timing": "during",
+      "tips": [
+        "Expand each principle to show details",
+        "Point out the severity levels",
+        "Show how principles map to checks"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "workflow-feature",
+      "title": "Workflow Engine Overview",
+      "content": "The workflow engine orchestrates the entire specification-to-implementation journey. It maintains state, validates transitions, and triggers appropriate actions at each phase.",
+      "context_type": "feature",
+      "context_id": "workflow",
+      "timing": "before",
+      "tips": [
+        "Explain the five workflow phases",
+        "Mention that phases can be revisited",
+        "Highlight the artifact generation at each step"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "artifact-generation",
+      "title": "Artifact Generation",
+      "content": "Each phase generates specific artifacts: spec.md, plan.md, and tasks.md. These documents are interconnected and maintain traceability.",
+      "context_type": "feature",
+      "context_id": "artifacts",
+      "timing": "during",
+      "tips": [
+        "Show the markdown rendering in the viewer",
+        "Point out cross-references between documents",
+        "Mention that artifacts are versioned"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "custom-scenarios",
+      "title": "Custom Scenario Creation",
+      "content": "The custom scenario feature allows presenters to tailor demos to specific audiences. Create scenarios that match the industry or use case of your audience.",
+      "context_type": "feature",
+      "context_id": "custom-scenarios",
+      "timing": "before",
+      "tips": [
+        "Show the custom scenario form",
+        "Explain validation requirements",
+        "Mention that custom scenarios persist locally"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "demo-reset",
+      "title": "Demo Reset Feature",
+      "content": "The reset feature allows quick restoration of the demo to its initial state. Use this between demo sessions or to show the workflow from the beginning.",
+      "context_type": "feature",
+      "context_id": "reset",
+      "timing": "before",
+      "tips": [
+        "Demonstrate the quick reset (<5 seconds)",
+        "Mention that custom scenarios are preserved",
+        "Point out the clean state confirmation"
+      ],
+      "emphasis_level": 1
+    }
+  ]
+}

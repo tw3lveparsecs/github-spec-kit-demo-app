@@ -1,0 +1,144 @@
+{
+  "notes": [
+    {
+      "note_id": "specify-phase-intro",
+      "title": "Specify Phase Overview",
+      "content": "This is where the journey begins. The specify phase captures the initial user request in natural language, transforming vague ideas into structured requirements.",
+      "context_type": "phase",
+      "context_id": "specify",
+      "timing": "before",
+      "tips": [
+        "Emphasize that natural language input is intentional - no special syntax required",
+        "Point out how the system identifies key entities and user intents",
+        "Mention that this mirrors how teams actually describe features"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "specify-phase-demo",
+      "title": "Demonstrating Specification Generation",
+      "content": "Watch how the system transforms the user story into a structured specification document with acceptance criteria, user stories, and functional requirements.",
+      "context_type": "phase",
+      "context_id": "specify",
+      "timing": "during",
+      "tips": [
+        "Highlight the automatic extraction of user stories",
+        "Show how acceptance criteria are generated",
+        "Note the consistent markdown formatting"
+      ],
+      "emphasis_level": 1
+    },
+    {
+      "note_id": "clarify-phase-intro",
+      "title": "Clarify Phase Overview",
+      "content": "The clarify phase identifies gaps and ambiguities in the specification. This demonstrates how the system helps teams catch issues early before implementation begins.",
+      "context_type": "phase",
+      "context_id": "clarify",
+      "timing": "before",
+      "tips": [
+        "Explain that clarification prevents costly rework later",
+        "Mention that this simulates stakeholder feedback loops",
+        "Point out that questions are context-aware based on the spec"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "clarify-phase-demo",
+      "title": "Interactive Clarification",
+      "content": "In a real workflow, this is where you'd interact with stakeholders or the AI to resolve ambiguities. The demo shows pre-defined clarifications for speed.",
+      "context_type": "phase",
+      "context_id": "clarify",
+      "timing": "during",
+      "tips": [
+        "Note that real implementations allow iterative Q&A",
+        "Highlight that clarifications update the specification",
+        "Mention integration with team communication tools"
+      ],
+      "emphasis_level": 1
+    },
+    {
+      "note_id": "plan-phase-intro",
+      "title": "Plan Phase Overview",
+      "content": "The planning phase creates the technical implementation plan. This is where architecture decisions, technology choices, and file structure are determined.",
+      "context_type": "phase",
+      "context_id": "plan",
+      "timing": "before",
+      "tips": [
+        "Emphasize that the plan respects existing codebase conventions",
+        "Point out constitution principles are checked here",
+        "Mention that plans include dependency graphs"
+      ],
+      "emphasis_level": 3
+    },
+    {
+      "note_id": "plan-phase-constitution",
+      "title": "Constitution Checks in Planning",
+      "content": "Notice the constitution checks running during plan generation. These ensure the plan adheres to organizational standards and best practices.",
+      "context_type": "phase",
+      "context_id": "plan",
+      "timing": "during",
+      "tips": [
+        "Show the constitution panel alongside the plan",
+        "Highlight any passing/failing checks",
+        "Explain how violations would be flagged and addressed"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "tasks-phase-intro",
+      "title": "Tasks Phase Overview",
+      "content": "The tasks phase breaks down the plan into actionable implementation tasks. Each task is atomic, testable, and includes clear success criteria.",
+      "context_type": "phase",
+      "context_id": "tasks",
+      "timing": "before",
+      "tips": [
+        "Note that tasks include parallel execution markers",
+        "Point out dependency relationships between tasks",
+        "Mention that task IDs enable tracking and automation"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "tasks-phase-demo",
+      "title": "Task Breakdown Details",
+      "content": "Each task includes the file path, description, and any dependencies. Tasks marked [P] can be executed in parallel for faster implementation.",
+      "context_type": "phase",
+      "context_id": "tasks",
+      "timing": "during",
+      "tips": [
+        "Explain the TDD approach with tests before implementation",
+        "Show how tasks reference specific file paths",
+        "Highlight the checkpoint markers between phases"
+      ],
+      "emphasis_level": 1
+    },
+    {
+      "note_id": "implement-phase-intro",
+      "title": "Implementation Phase Overview",
+      "content": "The final phase represents the actual code generation. In production, this is where the AI agent executes tasks and writes code.",
+      "context_type": "phase",
+      "context_id": "implement",
+      "timing": "before",
+      "tips": [
+        "Mention that implementation follows the task order",
+        "Note that each task is validated before moving to the next",
+        "Highlight integration with version control"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "implement-phase-demo",
+      "title": "Automated Implementation",
+      "content": "Watch as the system executes tasks sequentially, creating files, writing code, and running tests. The demo shows a simulated implementation flow.",
+      "context_type": "phase",
+      "context_id": "implement",
+      "timing": "during",
+      "tips": [
+        "Show the typing animation for code generation",
+        "Point out syntax highlighting in the viewer",
+        "Mention that real implementations include git commits"
+      ],
+      "emphasis_level": 1
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "notes": [
+    {
+      "note_id": "user-auth-overview",
+      "title": "User Authentication Scenario",
+      "content": "This scenario demonstrates building a complete user authentication system with registration, login, password reset, and session management.",
+      "context_type": "scenario",
+      "context_id": "user-authentication",
+      "timing": "before",
+      "tips": [
+        "Mention this is a common feature request",
+        "Highlight security considerations that will be addressed",
+        "Note that OAuth integration could be added as an extension"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "user-auth-security",
+      "title": "Security Best Practices",
+      "content": "The generated specification includes security requirements like password hashing, rate limiting, and secure token handling.",
+      "context_type": "scenario",
+      "context_id": "user-authentication",
+      "timing": "during",
+      "tips": [
+        "Point out the security-related acceptance criteria",
+        "Mention that constitution principles enforce security standards",
+        "Highlight input validation requirements"
+      ],
+      "emphasis_level": 3
+    },
+    {
+      "note_id": "ecommerce-overview",
+      "title": "E-commerce Checkout Scenario",
+      "content": "This scenario builds a complete checkout flow with cart management, payment processing, and order confirmation.",
+      "context_type": "scenario",
+      "context_id": "ecommerce-checkout",
+      "timing": "before",
+      "tips": [
+        "Mention payment gateway integration considerations",
+        "Highlight inventory management aspects",
+        "Note error handling for payment failures"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "ecommerce-payments",
+      "title": "Payment Integration Details",
+      "content": "The plan includes Stripe integration with proper error handling and webhook support for asynchronous payment confirmations.",
+      "context_type": "scenario",
+      "context_id": "ecommerce-checkout",
+      "timing": "during",
+      "tips": [
+        "Show the payment flow in the generated plan",
+        "Point out idempotency considerations",
+        "Mention PCI compliance requirements"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "dashboard-overview",
+      "title": "Data Dashboard Scenario",
+      "content": "This scenario creates an interactive data visualization dashboard with charts, filters, and real-time updates.",
+      "context_type": "scenario",
+      "context_id": "data-dashboard",
+      "timing": "before",
+      "tips": [
+        "Highlight data aggregation and caching strategies",
+        "Mention responsive design for various screen sizes",
+        "Note accessibility requirements for visualizations"
+      ],
+      "emphasis_level": 2
+    },
+    {
+      "note_id": "dashboard-performance",
+      "title": "Performance Considerations",
+      "content": "The generated plan includes data caching, pagination, and lazy loading to ensure the dashboard remains responsive with large datasets.",
+      "context_type": "scenario",
+      "context_id": "data-dashboard",
+      "timing": "during",
+      "tips": [
+        "Point out the caching strategy in the plan",
+        "Show how data fetching is optimized",
+        "Mention browser rendering performance techniques"
+      ],
+      "emphasis_level": 2
+    }
+  ]
+}

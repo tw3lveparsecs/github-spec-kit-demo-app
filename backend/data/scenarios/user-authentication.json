@@ -1,0 +1,65 @@
+{
+  "id": "user-authentication",
+  "title": "User Authentication System",
+  "description": "Implement secure user authentication with OAuth 2.0, multi-factor authentication, and session management for a web application.",
+  "domain": "security",
+  "is_custom": false,
+  "initial_prompt": "Build a user authentication system that supports OAuth 2.0, MFA, password reset, and secure session management",
+  "workflow_phases": [
+    {
+      "phase_name": "specify",
+      "display_name": "Specification",
+      "order": 1,
+      "command": "/speckit.specify",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 3,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "clarify",
+      "display_name": "Clarification",
+      "order": 2,
+      "command": "/speckit.clarify",
+      "input_required": true,
+      "input_prompt": "What authentication providers should be supported?",
+      "estimated_duration_seconds": 2,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "plan",
+      "display_name": "Planning",
+      "order": 3,
+      "command": "/speckit.plan",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 5,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "tasks",
+      "display_name": "Task Breakdown",
+      "order": 4,
+      "command": "/speckit.tasks",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 4,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "implement",
+      "display_name": "Implementation",
+      "order": 5,
+      "command": "/speckit.implement",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 2,
+      "status": "not_started",
+      "generated_artifact": null
+    }
+  ]
+}

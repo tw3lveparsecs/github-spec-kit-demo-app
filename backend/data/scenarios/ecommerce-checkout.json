@@ -1,0 +1,65 @@
+{
+  "id": "ecommerce-checkout",
+  "title": "E-commerce Checkout Flow",
+  "description": "Design a seamless checkout experience with cart management, payment processing, order confirmation, and email notifications.",
+  "domain": "ecommerce",
+  "is_custom": false,
+  "initial_prompt": "Create an e-commerce checkout flow with shopping cart, payment integration, inventory management, and order tracking",
+  "workflow_phases": [
+    {
+      "phase_name": "specify",
+      "display_name": "Specification",
+      "order": 1,
+      "command": "/speckit.specify",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 3,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "clarify",
+      "display_name": "Clarification",
+      "order": 2,
+      "command": "/speckit.clarify",
+      "input_required": true,
+      "input_prompt": "What payment providers should be integrated?",
+      "estimated_duration_seconds": 2,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "plan",
+      "display_name": "Planning",
+      "order": 3,
+      "command": "/speckit.plan",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 5,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "tasks",
+      "display_name": "Task Breakdown",
+      "order": 4,
+      "command": "/speckit.tasks",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 4,
+      "status": "not_started",
+      "generated_artifact": null
+    },
+    {
+      "phase_name": "implement",
+      "display_name": "Implementation",
+      "order": 5,
+      "command": "/speckit.implement",
+      "input_required": false,
+      "input_prompt": null,
+      "estimated_duration_seconds": 2,
+      "status": "not_started",
+      "generated_artifact": null
+    }
+  ]
+}
