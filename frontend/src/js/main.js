@@ -41,6 +41,17 @@ function demoApp() {
     },
     techStackInput: '',
 
+    // Phase input state
+    phaseInputs: {},
+    currentPhaseInput: '',
+    clarifyQuestions: [
+      { question: 'What are the primary user personas for this feature?', answer: '' },
+      { question: 'Are there any specific technical constraints or requirements?', answer: '' },
+      { question: 'What is the expected timeline for delivery?', answer: '' },
+      { question: 'Are there any integration requirements with existing systems?', answer: '' }
+    ],
+    isSubmittingInput: false,
+
     /**
      * Initialize the application.
      */
@@ -178,25 +189,160 @@ function demoApp() {
     },
 
     /**
+     * Submit user input for the current phase.
+     * This sends the user's input to the backend and generates a context-aware artifact.
+     */
+    async submitPhaseInput() {
+      if (!this.selectedScenario || !this.workflowState) return;
+      
+      const currentPhaseName = this.workflowState.current_phase?.phase_name;
+      if (!currentPhaseName) return;
+
+      this.isSubmittingInput = true;
+      this.isGeneratingArtifact = true;
+
+      try {
+        // Prepare clarifications if in clarify phase
+        const clarifications = currentPhaseName === 'clarify' 
+          ? this.clarifyQuestions.filter(q => q.answer.trim())
+          : [];
+
+        // Submit input to backend
+        const response = await apiClient.submitPhaseInput(
+          this.selectedScenario.id,
+          currentPhaseName,
+          this.currentPhaseInput,
+          clarifications
+        );
+
+        // Store the input
+        this.phaseInputs[currentPhaseName] = {
+          input: this.currentPhaseInput,
+          clarifications: clarifications,
+          submittedAt: new Date().toISOString()
+        };
+
+        // Update artifact from response
+        if (response.artifact) {
+          this.currentArtifact = response.artifact;
+        }
+
+        this.showStatus(`Input submitted for ${currentPhaseName} phase`);
+        console.log('Phase input submitted:', response);
+
+        // Clear current input after submission
+        this.currentPhaseInput = '';
+
+      } catch (error) {
+        this.showError('Failed to submit input: ' + error.message);
+      } finally {
+        this.isSubmittingInput = false;
+        this.isGeneratingArtifact = false;
+      }
+    },
+
+    /**
+     * Get placeholder text for the current phase input.
+     * @returns {string} Placeholder text
+     */
+    getPhaseInputPlaceholder() {
+      const placeholders = {
+        'specify': 'Describe the feature you want to build. Include user stories, requirements, and any specific functionality...',
+        'clarify': 'Add any additional context or clarifications here...',
+        'plan': 'Provide any technical preferences, constraints, or architectural considerations...',
+        'tasks': 'Add any specific tasks or requirements you want included in the task breakdown...',
+        'implement': 'Add any implementation notes, code preferences, or specific instructions...'
+      };
+      return placeholders[this.workflowState?.current_phase?.phase_name] || 'Enter your input...';
+    },
+
+    /**
+     * Get the title for the current phase input section.
+     * @returns {string} Section title
+     */
+    getPhaseInputTitle() {
+      const titles = {
+        'specify': 'Define Your Feature',
+        'clarify': 'Clarify Requirements',
+        'plan': 'Refine the Plan',
+        'tasks': 'Customize Tasks',
+        'implement': 'Implementation Notes'
+      };
+      return titles[this.workflowState?.current_phase?.phase_name] || 'Your Input';
+    },
+
+    /**
+     * Get the icon for the current phase.
+     * @returns {string} Icon emoji
+     */
+    getPhaseInputIcon() {
+      const icons = {
+        'specify': '📝',
+        'clarify': '💬',
+        'plan': '🗺️',
+        'tasks': '✅',
+        'implement': '⚙️'
+      };
+      return icons[this.workflowState?.current_phase?.phase_name] || '📄';
+    },
+
+    /**
+     * Check if current phase has been submitted.
+     * @returns {boolean} True if input has been submitted for current phase
+     */
+    hasSubmittedInput() {
+      const currentPhase = this.workflowState?.current_phase?.phase_name;
+      return currentPhase && !!this.phaseInputs[currentPhase];
+    },
+
+    /**
+     * Get submitted input for current phase.
+     * @returns {object|null} Submitted input data
+     */
+    getSubmittedInput() {
+      const currentPhase = this.workflowState?.current_phase?.phase_name;
+      return currentPhase ? this.phaseInputs[currentPhase] : null;
+    },
+
+    /**
+     * Reset phase inputs when demo is reset.
+     */
+    resetPhaseInputs() {
+      this.phaseInputs = {};
+      this.currentPhaseInput = '';
+      this.clarifyQuestions = this.clarifyQuestions.map(q => ({ ...q, answer: '' }));
+    },
+
+    /**
      * Generate artifact for the current phase.
      * @param {string} phaseName - The phase name
      */
     async generateArtifact(phaseName) {
-      // For demo purposes, create a mock artifact
+      // Check if we have submitted input for this phase
+      const submittedInput = this.phaseInputs[phaseName];
+      
+      if (submittedInput) {
+        // Use the artifact from the submitted input
+        // It was already generated when input was submitted
+        return;
+      }
+
+      // For demo purposes, create a mock artifact if no input was submitted
       // In a real implementation, this would call the backend
       const artifactTypes = {
         'specify': 'spec',
-        'clarify': 'spec',
+        'clarify': 'clarify',
         'plan': 'plan',
         'tasks': 'tasks',
         'implement': 'implement'
       };
       
       const artifactContent = {
-        'spec': '# Feature Specification\n\n## Overview\nThis is a detailed specification...',
-        'plan': '# Implementation Plan\n\n## Architecture\nHigh-level architecture...',
-        'tasks': '# Task Breakdown\n\n## Phase 1: Setup\n- [ ] Task 1\n- [ ] Task 2',
-        'implement': '# Implementation\n\n```python\ndef example():\n    pass\n```'
+        'spec': '# Feature Specification\n\n## Overview\nThis is a detailed specification...\n\n*Submit your input above to generate a customized specification.*',
+        'clarify': '# Clarification Summary\n\n## Questions\nAnswer the questions above to refine the specification...\n\n*Submit your answers to generate clarification notes.*',
+        'plan': '# Implementation Plan\n\n## Architecture\nHigh-level architecture...\n\n*Submit your technical preferences to customize the plan.*',
+        'tasks': '# Task Breakdown\n\n## Phase 1: Setup\n- [ ] Task 1\n- [ ] Task 2\n\n*Submit additional requirements to customize the task list.*',
+        'implement': '# Implementation\n\n```python\ndef example():\n    pass\n```\n\n*Submit implementation notes to finalize.*'
       };
       
       this.currentArtifact = {
@@ -257,6 +403,9 @@ function demoApp() {
       try {
         await apiClient.resetDemo();
         this.selectedScenario = null;
+        this.workflowState = null;
+        this.currentArtifact = null;
+        this.resetPhaseInputs();
         stateManager.clearSession();
         this.showStatus('Demo reset successfully');
         console.log('Demo reset');

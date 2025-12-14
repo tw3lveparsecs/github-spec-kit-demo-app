@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="/css/components/custom-scenario.css">
   <link rel="stylesheet" href="/css/components/form-validation.css">
   <link rel="stylesheet" href="/css/components/presenter-notes.css">
+  <link rel="stylesheet" href="/css/components/phase-input.css">
 </head>
 <body>
   <!-- Skip Link for Keyboard Navigation -->
@@ -272,6 +273,83 @@
                   <option value="implement">Implementation</option>
                 </select>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Phase Input Section (Interactive input for each phase) -->
+      <div x-show="selectedScenario && workflowState" class="Box mt-4 fade-in">
+        <div class="Box-header">
+          <h2 class="Box-title">
+            <span class="mr-2" x-text="getPhaseInputIcon()"></span>
+            <span x-text="getPhaseInputTitle()"></span>
+          </h2>
+        </div>
+        <div class="Box-body">
+          <div class="phase-input-container" :data-phase="workflowState?.current_phase?.phase_name">
+            <!-- Input Header -->
+            <div class="phase-input-header">
+              <span class="phase-input-icon" x-text="getPhaseInputIcon()"></span>
+              <div>
+                <h4 class="phase-input-title" x-text="getPhaseInputTitle()"></h4>
+                <p class="phase-input-subtitle">Provide your input to generate a customized artifact for this phase</p>
+              </div>
+            </div>
+            
+            <!-- Clarification Questions (only for clarify phase) -->
+            <div x-show="workflowState?.current_phase?.phase_name === 'clarify'" class="clarify-questions">
+              <template x-for="(q, index) in clarifyQuestions" :key="index">
+                <div class="clarify-question">
+                  <p class="clarify-question-text" x-text="q.question"></p>
+                  <input type="text" 
+                         class="clarify-question-input"
+                         x-model="clarifyQuestions[index].answer"
+                         :placeholder="'Your answer...'"
+                         :disabled="isSubmittingInput">
+                </div>
+              </template>
+            </div>
+            
+            <!-- Main Input Field -->
+            <div class="phase-input-field">
+              <label class="phase-input-label">
+                <span x-text="workflowState?.current_phase?.phase_name === 'clarify' ? 'Additional Context' : 'Your Input'"></span>
+              </label>
+              <textarea class="phase-input-textarea"
+                        x-model="currentPhaseInput"
+                        :placeholder="getPhaseInputPlaceholder()"
+                        :disabled="isSubmittingInput"
+                        rows="5"></textarea>
+              <div class="phase-input-counter" 
+                   :class="{'phase-input-counter--warning': currentPhaseInput.length > 1500, 'phase-input-counter--over': currentPhaseInput.length > 2000}">
+                <span x-text="`${currentPhaseInput.length}/2000`"></span>
+              </div>
+            </div>
+            
+            <!-- Previously Submitted Input (if any) -->
+            <div x-show="hasSubmittedInput()" class="phase-user-input">
+              <div class="phase-user-input-header">
+                <span class="Label Label--success">✓ Submitted</span>
+                <span class="phase-user-input-label">Your previous input for this phase</span>
+              </div>
+              <div class="phase-user-input-content" x-text="getSubmittedInput()?.input || 'No text input'"></div>
+            </div>
+            
+            <!-- Submit Actions -->
+            <div class="phase-input-actions">
+              <button class="phase-input-skip"
+                      @click="nextPhase()"
+                      :disabled="isSubmittingInput || workflowState?.phase_index === 4">
+                Skip to Next Phase →
+              </button>
+              <button class="phase-input-submit"
+                      :class="{'phase-input-submit--loading': isSubmittingInput}"
+                      @click="submitPhaseInput()"
+                      :disabled="isSubmittingInput || (!currentPhaseInput.trim() && workflowState?.current_phase?.phase_name !== 'clarify')">
+                <span x-show="!isSubmittingInput">Generate Artifact</span>
+                <span x-show="isSubmittingInput">Generating...</span>
+              </button>
             </div>
           </div>
         </div>

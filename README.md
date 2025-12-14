@@ -2,6 +2,8 @@
 
 An interactive web-based demonstration application for showcasing GitHub Spec Kit workflow capabilities to audiences during presentations and workshops.
 
+> Note: This is currently under active development and intended for demo purposes only. It is not a production-ready application.
+
 ![Demo Screenshot](docs/demo-screenshot.png)
 
 ## Features

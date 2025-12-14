@@ -35,6 +35,7 @@ class ActionLogEntry(BaseModel):
             "scenario_select",
             "phase_advance",
             "phase_jump",
+            "phase_input",
             "reset",
             "custom_create",
             "notes_toggle",
@@ -65,6 +66,7 @@ class DemoSession(BaseModel):
     presenter_notes_visible: bool = False
     custom_scenarios: List[str] = field(default_factory=list)
     action_log: List[ActionLogEntry] = field(default_factory=list)
+    phase_inputs: Dict[str, Any] = field(default_factory=dict)
 
     def log_action(
         self, action_type: str, action_detail: str, duration_ms: Optional[int] = None

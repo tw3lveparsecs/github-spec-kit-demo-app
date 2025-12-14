@@ -9,10 +9,12 @@ from flask import jsonify, Response, request
 from api import api_bp
 from services.session_service import SessionService
 from services.workflow_service import WorkflowService
+from services.artifact_generator import ArtifactGenerator
 
 logger = logging.getLogger(__name__)
 session_service = SessionService()
 workflow_service = WorkflowService()
+artifact_generator = ArtifactGenerator()
 
 
 @api_bp.route("/workflow/reset", methods=["POST"])
@@ -123,4 +125,103 @@ def jump_workflow(scenario_id: str) -> Response:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"Error jumping to phase: {e}")
+        raise
+
+
+@api_bp.route("/workflow/<scenario_id>/input", methods=["POST"])
+def submit_phase_input(scenario_id: str) -> Response:
+    """
+    POST /api/workflow/{scenarioId}/input - Submit user input for current phase.
+
+    This endpoint accepts user input for the current workflow phase and generates
+    an artifact based on that input. The input is stored in the session and used
+    to create context-aware artifacts.
+
+    Args:
+        scenario_id: The scenario identifier.
+
+    Request Body:
+        {
+            "phase": "specify|clarify|plan|tasks|implement",
+            "input": "User's input text for this phase",
+            "clarifications": [{"question": "...", "answer": "..."}]  // For clarify phase
+        }
+
+    Returns:
+        JSON response with generated artifact and updated workflow state.
+    """
+    try:
+        data = request.get_json()
+        phase_name = data.get("phase")
+        user_input = data.get("input", "")
+        clarifications = data.get("clarifications", [])
+
+        if not phase_name:
+            return jsonify({"error": "Missing 'phase' in request body"}), 400
+
+        # Store user input in session
+        session = session_service.get_current_session()
+        
+        # Add input to session's phase inputs
+        if not hasattr(session, 'phase_inputs') or session.phase_inputs is None:
+            session.phase_inputs = {}
+        
+        session.phase_inputs[phase_name] = {
+            "input": user_input,
+            "clarifications": clarifications,
+            "submitted_at": datetime.utcnow().isoformat() + "Z"
+        }
+        
+        session.log_action("phase_input", f"User input submitted for {phase_name}")
+
+        # Generate artifact based on phase and input
+        artifact = workflow_service.generate_artifact_with_input(
+            scenario_id, 
+            phase_name, 
+            user_input,
+            clarifications,
+            session.phase_inputs
+        )
+
+        logger.info(f"Generated artifact for phase {phase_name} with user input")
+
+        return jsonify({
+            "artifact": artifact,
+            "phase": phase_name,
+            "input_received": True,
+            "session_id": str(session.session_id)
+        })
+
+    except ValueError as e:
+        logger.warning(f"Cannot process phase input: {e}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error processing phase input: {e}")
+        raise
+
+
+@api_bp.route("/workflow/<scenario_id>/inputs", methods=["GET"])
+def get_phase_inputs(scenario_id: str) -> Response:
+    """
+    GET /api/workflow/{scenarioId}/inputs - Get all user inputs for the workflow.
+
+    Returns all inputs submitted by the user across all phases for this scenario.
+
+    Args:
+        scenario_id: The scenario identifier.
+
+    Returns:
+        JSON response with all phase inputs.
+    """
+    try:
+        session = session_service.get_current_session()
+        phase_inputs = getattr(session, 'phase_inputs', {}) or {}
+        
+        return jsonify({
+            "scenario_id": scenario_id,
+            "phase_inputs": phase_inputs,
+            "session_id": str(session.session_id)
+        })
+    except Exception as e:
+        logger.error(f"Error getting phase inputs: {e}")
         raise

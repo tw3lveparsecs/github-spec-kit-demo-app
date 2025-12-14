@@ -12,6 +12,7 @@ from models.generated_artifact import GeneratedArtifact
 from services.scenario_service import ScenarioService
 from services.session_service import SessionService
 from services.constitution_service import ConstitutionService
+from services.artifact_generator import ArtifactGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class WorkflowService:
         self.scenario_service = ScenarioService()
         self.session_service = SessionService()
         self.constitution_service = ConstitutionService()
+        self.artifact_generator = ArtifactGenerator()
 
     def initialize_workflow(self, scenario_id: str) -> Dict[str, Any]:
         """
@@ -180,3 +182,97 @@ class WorkflowService:
             "total_phases": len(scenario.workflow_phases),
             "session_id": str(session.session_id),
         }
+
+    def generate_artifact_with_input(
+        self,
+        scenario_id: str,
+        phase_name: str,
+        user_input: str,
+        clarifications: List[Dict[str, str]] = None,
+        all_phase_inputs: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate an artifact based on user input for a specific phase.
+
+        This method creates context-aware artifacts that incorporate the user's
+        input from the current phase and any previous phases.
+
+        Args:
+            scenario_id: The scenario identifier.
+            phase_name: The current phase name.
+            user_input: The user's input text for this phase.
+            clarifications: List of Q&A pairs for clarify phase.
+            all_phase_inputs: Dictionary of all inputs from previous phases.
+
+        Returns:
+            Dictionary with the generated artifact.
+
+        Raises:
+            ValueError: If scenario not found.
+        """
+        scenario = self.scenario_service.get_scenario_by_id(scenario_id)
+        if scenario is None:
+            raise ValueError(f"Scenario not found: {scenario_id}")
+
+        if clarifications is None:
+            clarifications = []
+        if all_phase_inputs is None:
+            all_phase_inputs = {}
+
+        # Build context from all phase inputs
+        context = self._build_artifact_context(
+            scenario, phase_name, user_input, clarifications, all_phase_inputs
+        )
+
+        # Generate artifact based on phase
+        artifact = self.artifact_generator.generate_with_context(
+            phase_name, scenario, context
+        )
+
+        logger.info(f"Generated {phase_name} artifact with user input for {scenario_id}")
+
+        return artifact.to_dict() if hasattr(artifact, 'to_dict') else artifact
+
+    def _build_artifact_context(
+        self,
+        scenario: DemoScenario,
+        phase_name: str,
+        user_input: str,
+        clarifications: List[Dict[str, str]],
+        all_phase_inputs: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Build context dictionary for artifact generation.
+
+        Combines scenario data, user inputs from all phases, and current input
+        to create a comprehensive context for artifact generation.
+        """
+        # Get previous phase inputs
+        specify_input = all_phase_inputs.get("specify", {}).get("input", "")
+        clarify_input = all_phase_inputs.get("clarify", {})
+        plan_input = all_phase_inputs.get("plan", {}).get("input", "")
+        tasks_input = all_phase_inputs.get("tasks", {}).get("input", "")
+
+        # Build formatted clarifications
+        formatted_clarifications = ""
+        if clarifications:
+            qa_pairs = [f"**Q:** {c.get('question', '')}\n**A:** {c.get('answer', '')}" 
+                       for c in clarifications if c.get('answer')]
+            formatted_clarifications = "\n\n".join(qa_pairs)
+
+        context = {
+            "title": scenario.title,
+            "description": scenario.description,
+            "domain": scenario.domain,
+            "initial_prompt": scenario.initial_prompt,
+            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "current_phase": phase_name,
+            "user_input": user_input,
+            "specify_input": specify_input or scenario.initial_prompt,
+            "clarifications": formatted_clarifications,
+            "plan_input": plan_input,
+            "tasks_input": tasks_input,
+            "tech_stack": ", ".join(getattr(scenario, 'tech_stack', []) or []),
+        }
+
+        return context

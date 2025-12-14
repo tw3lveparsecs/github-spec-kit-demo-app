@@ -3,7 +3,7 @@ ArtifactGenerator for creating spec, plan, and tasks documents.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 from datetime import datetime
 from pathlib import Path
 
@@ -46,8 +46,285 @@ class ArtifactGenerator:
         result = template
         for key, value in context.items():
             placeholder = f"{{{{{key}}}}}"
-            result = result.replace(placeholder, str(value))
+            result = result.replace(placeholder, str(value) if value else "")
         return result
+
+    def generate_with_context(
+        self, 
+        phase_name: str, 
+        scenario: DemoScenario, 
+        context: Dict[str, Any]
+    ) -> GeneratedArtifact:
+        """
+        Generate an artifact for a specific phase using provided context.
+
+        This method creates context-aware artifacts that incorporate user input
+        from the current and previous phases.
+
+        Args:
+            phase_name: The workflow phase (specify, clarify, plan, tasks, implement).
+            scenario: The demo scenario.
+            context: Dictionary containing all context including user inputs.
+
+        Returns:
+            GeneratedArtifact with the generated content.
+        """
+        start_time = datetime.utcnow()
+        
+        # Determine artifact type and generate appropriate content
+        # Map phase names to artifact types (clarify produces a refined spec)
+        phase_to_artifact_type = {
+            "specify": "spec",
+            "clarify": "spec",  # Clarify produces a refined specification
+            "plan": "plan",
+            "tasks": "tasks",
+            "implement": "implement"
+        }
+        
+        if phase_name == "specify":
+            markdown_content = self._generate_spec_content(scenario, context)
+            artifact_type = "spec"
+        elif phase_name == "clarify":
+            markdown_content = self._generate_clarify_content(scenario, context)
+            artifact_type = "spec"  # Clarify refines the spec
+        elif phase_name == "plan":
+            markdown_content = self._generate_plan_content(scenario, context)
+            artifact_type = "plan"
+        elif phase_name == "tasks":
+            markdown_content = self._generate_tasks_content(scenario, context)
+            artifact_type = "tasks"
+        elif phase_name == "implement":
+            markdown_content = self._generate_implement_content(scenario, context)
+            artifact_type = "implement"
+        else:
+            markdown_content = f"# {phase_name.title()} Phase\n\nNo content generated for this phase."
+            artifact_type = phase_name
+
+        # Render to HTML
+        html_content = self.markdown_service.render_to_html(markdown_content)
+        
+        # Calculate duration
+        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+
+        artifact = GeneratedArtifact(
+            artifact_type=artifact_type,
+            phase_name=phase_name,
+            content_markdown=markdown_content,
+            content_html=html_content,
+            generated_at=datetime.utcnow(),
+            generation_duration_ms=duration_ms,
+        )
+
+        logger.info(f"Generated {artifact_type} artifact for phase {phase_name}")
+        return artifact
+
+    def _generate_spec_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
+        """Generate specification content from user input."""
+        user_input = context.get("user_input", "") or context.get("specify_input", "")
+        
+        content = f"""# Feature Specification: {context.get('title', scenario.title)}
+
+## Overview
+
+{context.get('description', scenario.description)}
+
+## User Requirements
+
+{user_input if user_input else scenario.initial_prompt}
+
+## Domain
+
+**Industry/Domain:** {context.get('domain', scenario.domain)}
+
+## Technical Context
+
+{f"**Tech Stack:** {context.get('tech_stack')}" if context.get('tech_stack') else ""}
+
+## Generated
+
+*Generated on {context.get('date', datetime.utcnow().strftime('%Y-%m-%d'))}*
+"""
+        return content
+
+    def _generate_clarify_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
+        """Generate clarification summary content."""
+        clarifications = context.get("clarifications", "")
+        user_input = context.get("user_input", "")
+        
+        content = f"""# Clarification Summary: {context.get('title', scenario.title)}
+
+## Original Requirements
+
+{context.get('specify_input', scenario.initial_prompt)}
+
+## Clarifying Questions & Answers
+
+{clarifications if clarifications else "*No clarifications provided yet.*"}
+
+## Additional Context
+
+{user_input if user_input else "*No additional context provided.*"}
+
+## Next Steps
+
+Based on the clarifications above, the next phase will create a detailed implementation plan.
+
+## Generated
+
+*Generated on {context.get('date', datetime.utcnow().strftime('%Y-%m-%d'))}*
+"""
+        return content
+
+    def _generate_plan_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
+        """Generate implementation plan content."""
+        user_input = context.get("user_input", "")
+        
+        content = f"""# Implementation Plan: {context.get('title', scenario.title)}
+
+## Executive Summary
+
+This plan outlines the implementation approach for {context.get('title', scenario.title)}.
+
+## Requirements Summary
+
+{context.get('specify_input', scenario.initial_prompt)}
+
+## Clarifications Applied
+
+{context.get('clarifications', '*See clarification phase for details.*')}
+
+## Technical Approach
+
+{user_input if user_input else f'''
+### Architecture Overview
+
+The implementation will follow a modular architecture with the following components:
+
+1. **Frontend Layer** - User interface and experience
+2. **Backend Layer** - Business logic and API endpoints  
+3. **Data Layer** - Data persistence and management
+4. **Integration Layer** - External service connections
+
+### Technology Stack
+
+{context.get('tech_stack', 'To be determined based on requirements')}
+
+### Key Design Decisions
+
+- Follow industry best practices for {context.get('domain', 'software development')}
+- Implement comprehensive error handling
+- Ensure scalability and maintainability
+'''}
+
+## Implementation Phases
+
+1. **Phase 1: Foundation** - Project setup and infrastructure
+2. **Phase 2: Core Features** - Primary functionality implementation
+3. **Phase 3: Integration** - External services and APIs
+4. **Phase 4: Polish** - Testing, documentation, and optimization
+
+## Generated
+
+*Generated on {context.get('date', datetime.utcnow().strftime('%Y-%m-%d'))}*
+"""
+        return content
+
+    def _generate_tasks_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
+        """Generate task breakdown content."""
+        user_input = context.get("user_input", "")
+        
+        content = f"""# Task Breakdown: {context.get('title', scenario.title)}
+
+## Overview
+
+This document contains the detailed task breakdown for implementing {context.get('title', scenario.title)}.
+
+{f"## Custom Tasks\\n\\n{user_input}" if user_input else ""}
+
+## Phase 1: Setup & Foundation
+
+- [ ] T001 Create project directory structure
+- [ ] T002 Configure development environment
+- [ ] T003 Set up linting and formatting tools
+- [ ] T004 Initialize version control
+- [ ] T005 Create initial documentation
+
+## Phase 2: Core Implementation
+
+- [ ] T006 Implement data models
+- [ ] T007 Create service layer
+- [ ] T008 Build API endpoints
+- [ ] T009 Develop frontend components
+- [ ] T010 Implement business logic
+
+## Phase 3: Integration & Testing
+
+- [ ] T011 Write unit tests
+- [ ] T012 Write integration tests
+- [ ] T013 Configure CI/CD pipeline
+- [ ] T014 Set up monitoring
+
+## Phase 4: Polish & Documentation
+
+- [ ] T015 Create user documentation
+- [ ] T016 Performance optimization
+- [ ] T017 Security review
+- [ ] T018 Final testing and QA
+
+## Dependencies
+
+Tasks should be completed in order within each phase.
+
+## Generated
+
+*Generated on {context.get('date', datetime.utcnow().strftime('%Y-%m-%d'))}*
+"""
+        return content
+
+    def _generate_implement_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
+        """Generate implementation code/output content."""
+        user_input = context.get("user_input", "")
+        
+        content = f"""# Implementation: {context.get('title', scenario.title)}
+
+## Implementation Progress
+
+🎉 **Congratulations!** You've completed the Spec Kit workflow demonstration.
+
+## Summary of Workflow
+
+1. ✅ **Specification** - Captured requirements
+2. ✅ **Clarification** - Answered questions and refined scope
+3. ✅ **Planning** - Created implementation approach
+4. ✅ **Tasks** - Broke down work into actionable items
+5. ✅ **Implementation** - Ready to execute!
+
+{f"## Implementation Notes\\n\\n{user_input}" if user_input else ""}
+
+## What's Next?
+
+In a real Spec Kit workflow, this phase would:
+
+- Execute tasks automatically using AI assistance
+- Generate code based on the plan and task breakdown
+- Create pull requests with implemented features
+- Run tests and validation checks
+
+## Demo Complete
+
+This demonstration shows how Spec Kit helps teams:
+
+- **Specify** requirements clearly
+- **Clarify** ambiguities before coding
+- **Plan** implementation thoughtfully
+- **Break down** work into manageable tasks
+- **Implement** with confidence
+
+## Generated
+
+*Generated on {context.get('date', datetime.utcnow().strftime('%Y-%m-%d'))}*
+"""
+        return content
 
     def generate_spec(self, scenario: DemoScenario) -> GeneratedArtifact:
         """

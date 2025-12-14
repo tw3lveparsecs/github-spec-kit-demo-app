@@ -101,6 +101,34 @@ const apiClient = {
       method: 'POST',
       body: JSON.stringify({ phase: phaseName })
     });
+  },
+
+  /**
+   * Submit user input for a workflow phase.
+   * @param {string} scenarioId - Scenario identifier
+   * @param {string} phaseName - Phase name
+   * @param {string} userInput - User's input text
+   * @param {Array} clarifications - Optional array of {question, answer} pairs
+   * @returns {Promise<object>} Generated artifact and workflow state
+   */
+  async submitPhaseInput(scenarioId, phaseName, userInput, clarifications = []) {
+    return apiRequest(`/workflow/${scenarioId}/input`, {
+      method: 'POST',
+      body: JSON.stringify({
+        phase: phaseName,
+        input: userInput,
+        clarifications: clarifications
+      })
+    });
+  },
+
+  /**
+   * Get all phase inputs for a scenario.
+   * @param {string} scenarioId - Scenario identifier
+   * @returns {Promise<object>} All phase inputs
+   */
+  async getPhaseInputs(scenarioId) {
+    return apiRequest(`/workflow/${scenarioId}/inputs`);
   }
 };
 
