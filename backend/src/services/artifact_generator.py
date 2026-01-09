@@ -316,6 +316,10 @@ The implementation will follow a modular architecture with the following compone
 
 ---
 """
+
+        custom_requirements_section = (
+            f"## Custom Requirements\n\n{user_input}" if user_input else ""
+        )
         
         content = f"""# Task Breakdown: {context.get('title', scenario.title)}
 {previous_section}
@@ -323,7 +327,7 @@ The implementation will follow a modular architecture with the following compone
 
 This document contains the detailed task breakdown for implementing {context.get('title', scenario.title)}.
 
-{f"## Custom Requirements\\n\\n{user_input}" if user_input else ""}
+    {custom_requirements_section}
 
 ## Clarifications Applied
 
@@ -398,6 +402,10 @@ Tasks should be completed in order within each phase.
 
 ---
 """
+
+        implementation_notes_section = (
+            f"## Implementation Notes\n\n{user_input}" if user_input else ""
+        )
         
         content = f"""# Implementation: {context.get('title', scenario.title)}
 {previous_section}
@@ -417,7 +425,7 @@ Tasks should be completed in order within each phase.
 
 {clarifications if clarifications else '*No clarifications were provided.*'}
 
-{f"## Implementation Notes\\n\\n{user_input}" if user_input else ""}
+{implementation_notes_section}
 
 ## What's Next?
 
