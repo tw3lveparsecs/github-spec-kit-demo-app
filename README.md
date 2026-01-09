@@ -24,7 +24,9 @@ An interactive web-based demonstration application for showcasing GitHub Spec Ki
 1. Click the green "Code" button
 2. Select "Codespaces" → "Create codespace on main"
 3. Wait ~60 seconds for auto-configuration
-4. Open browser to `http://localhost:5000`
+4. Codespaces will auto-forward port 5000 and open the app in your browser
+
+If it doesn't open automatically, use the **Ports** tab and open the forwarded URL for port 5000.
 
 ### Option 2: Local Development
 

@@ -104,13 +104,15 @@ docker run -p 5000:5000 speckit-demo:dev
 
 1. Click "Code" → "Codespaces" → "Create codespace on main"
 2. Wait ~60s for setup to complete
-3. Open http://localhost:5000 when port forwarding starts
+3. Codespaces will auto-start the backend and auto-forward port 5000 (it should open in your browser)
 4. Select a demo scenario and explore!
 
 The `.devcontainer/post-create.sh` script automatically:
 - Installs Python dependencies
 - Installs frontend dependencies
 - Verifies installations
+
+The `.devcontainer/post-start.sh` script automatically starts the Flask backend.
 
 ## Production Deployment
 

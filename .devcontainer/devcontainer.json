@@ -3,18 +3,16 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-  "forwardPorts": [5000, 8000],
+  "forwardPorts": [5000],
   "portsAttributes": {
     "5000": {
       "label": "Flask Backend",
-      "onAutoForward": "notify"
-    },
-    "8000": {
-      "label": "Frontend Dev Server",
-      "onAutoForward": "notify"
+      "onAutoForward": "openBrowser"
     }
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "waitFor": "postStartCommand",
   "customizations": {
     "vscode": {
       "extensions": [
