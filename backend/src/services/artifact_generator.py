@@ -105,6 +105,9 @@ class ArtifactGenerator:
         
         # Calculate duration
         duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        
+        # Estimate token count (roughly 4 characters per token for English text)
+        estimated_tokens = len(markdown_content) // 4
 
         artifact = GeneratedArtifact(
             artifact_type=artifact_type,
@@ -113,14 +116,19 @@ class ArtifactGenerator:
             content_html=html_content,
             generated_at=datetime.utcnow(),
             generation_duration_ms=duration_ms,
+            tokens_used=estimated_tokens,
         )
 
-        logger.info(f"Generated {artifact_type} artifact for phase {phase_name}")
+        logger.info(f"Generated {artifact_type} artifact for phase {phase_name} (~{estimated_tokens} tokens, {duration_ms}ms)")
         return artifact
 
     def _generate_spec_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
-        """Generate specification content from user input."""
+        """Generate specification content from user input or scenario's initial prompt."""
         user_input = context.get("user_input", "") or context.get("specify_input", "")
+        
+        # For demo scenarios (no user input), use the scenario's initial_prompt as the specification
+        # For custom scenarios, use the user's input
+        specification_content = user_input if user_input else scenario.initial_prompt
         
         content = f"""# Feature Specification: {context.get('title', scenario.title)}
 
@@ -128,9 +136,9 @@ class ArtifactGenerator:
 
 {context.get('description', scenario.description)}
 
-## User Requirements
+## 📝 User Specification Input
 
-{user_input if user_input else scenario.initial_prompt}
+> {specification_content}
 
 ## Domain
 
@@ -139,6 +147,19 @@ class ArtifactGenerator:
 ## Technical Context
 
 {f"**Tech Stack:** {context.get('tech_stack')}" if context.get('tech_stack') else ""}
+
+## Analysis
+
+Based on the specification above, this feature will require:
+
+- **User Interface**: Interactive components for user interaction
+- **Backend Services**: API endpoints and business logic
+- **Data Layer**: Storage and retrieval mechanisms
+- **Security**: Authentication and authorization checks
+
+## Next Steps
+
+Proceed to the **Clarification** phase to refine requirements and resolve any ambiguities.
 
 ## Generated
 
@@ -150,16 +171,30 @@ class ArtifactGenerator:
         """Generate clarification summary content."""
         clarifications = context.get("clarifications", "")
         user_input = context.get("user_input", "")
+        specify_input = context.get("specify_input", "")
+        
+        # Build previous context section
+        previous_context = ""
+        if specify_input and specify_input != scenario.initial_prompt:
+            previous_context = f"""
+## 📋 Previous Context: Specification Phase
+
+> **User Input from Specify Phase:**
+> 
+> {specify_input}
+
+---
+"""
         
         content = f"""# Clarification Summary: {context.get('title', scenario.title)}
-
+{previous_context}
 ## Original Requirements
 
-{context.get('specify_input', scenario.initial_prompt)}
+{scenario.initial_prompt}
 
 ## Clarifying Questions & Answers
 
-{clarifications if clarifications else "*No clarifications provided yet.*"}
+{clarifications if clarifications else "*Answer the questions above and click 'Generate Artifact' to see your clarifications here.*"}
 
 ## Additional Context
 
@@ -178,20 +213,45 @@ Based on the clarifications above, the next phase will create a detailed impleme
     def _generate_plan_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
         """Generate implementation plan content."""
         user_input = context.get("user_input", "")
+        specify_input = context.get("specify_input", "")
+        clarifications = context.get("clarifications", "")
+        
+        # Build previous context section
+        previous_context = ""
+        if specify_input and specify_input != scenario.initial_prompt:
+            previous_context += f"""
+> **From Specify Phase:**
+> {specify_input}
+"""
+        if clarifications:
+            previous_context += f"""
+> **From Clarify Phase:**
+> {clarifications}
+"""
+        
+        previous_section = ""
+        if previous_context:
+            previous_section = f"""
+## 📋 Previous Context
+
+{previous_context}
+
+---
+"""
         
         content = f"""# Implementation Plan: {context.get('title', scenario.title)}
-
+{previous_section}
 ## Executive Summary
 
 This plan outlines the implementation approach for {context.get('title', scenario.title)}.
 
 ## Requirements Summary
 
-{context.get('specify_input', scenario.initial_prompt)}
+{scenario.initial_prompt}
 
 ## Clarifications Applied
 
-{context.get('clarifications', '*See clarification phase for details.*')}
+{clarifications if clarifications else '*No clarifications were provided.*'}
 
 ## Technical Approach
 
@@ -232,14 +292,42 @@ The implementation will follow a modular architecture with the following compone
     def _generate_tasks_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
         """Generate task breakdown content."""
         user_input = context.get("user_input", "")
+        specify_input = context.get("specify_input", "")
+        clarifications = context.get("clarifications", "")
+        plan_input = context.get("plan_input", "")
+        
+        # Build previous context section.
+        # For step 4 (tasks), we want the previous step's *output* (plan) to be the primary context,
+        # rather than re-showing step 2 clarifications.
+        previous_context_parts = []
+        if plan_input:
+            previous_context_parts.append(f"> **From Plan Phase:**\n> {plan_input}")
+        elif clarifications:
+            previous_context_parts.append(f"> **From Clarify Phase:**\n> {clarifications}")
+        elif specify_input and specify_input != scenario.initial_prompt:
+            previous_context_parts.append(f"> **From Specify Phase:**\n> {specify_input}")
+        
+        previous_section = ""
+        if previous_context_parts:
+            previous_section = f"""
+## 📋 Previous Context
+
+{chr(10).join(previous_context_parts)}
+
+---
+"""
         
         content = f"""# Task Breakdown: {context.get('title', scenario.title)}
-
+{previous_section}
 ## Overview
 
 This document contains the detailed task breakdown for implementing {context.get('title', scenario.title)}.
 
-{f"## Custom Tasks\\n\\n{user_input}" if user_input else ""}
+{f"## Custom Requirements\\n\\n{user_input}" if user_input else ""}
+
+## Clarifications Applied
+
+{clarifications if clarifications else '*No clarifications were provided.*'}
 
 ## Phase 1: Setup & Foundation
 
@@ -284,9 +372,35 @@ Tasks should be completed in order within each phase.
     def _generate_implement_content(self, scenario: DemoScenario, context: Dict[str, Any]) -> str:
         """Generate implementation code/output content."""
         user_input = context.get("user_input", "")
+        specify_input = context.get("specify_input", "")
+        clarifications = context.get("clarifications", "")
+        plan_input = context.get("plan_input", "")
+        tasks_input = context.get("tasks_input", "")
+        
+        # Build previous context section.
+        # For step 5 (implementation), the "previous" step is tasks, so prefer that output.
+        previous_context_parts = []
+        if tasks_input:
+            previous_context_parts.append(f"> **From Tasks Phase:**\n> {tasks_input}")
+        elif plan_input:
+            previous_context_parts.append(f"> **From Plan Phase:**\n> {plan_input}")
+        elif clarifications:
+            previous_context_parts.append(f"> **From Clarify Phase:**\n> {clarifications}")
+        elif specify_input and specify_input != scenario.initial_prompt:
+            previous_context_parts.append(f"> **From Specify Phase:**\n> {specify_input}")
+        
+        previous_section = ""
+        if previous_context_parts:
+            previous_section = f"""
+## 📋 Previous Context
+
+{chr(10).join(previous_context_parts)}
+
+---
+"""
         
         content = f"""# Implementation: {context.get('title', scenario.title)}
-
+{previous_section}
 ## Implementation Progress
 
 🎉 **Congratulations!** You've completed the Spec Kit workflow demonstration.
@@ -298,6 +412,10 @@ Tasks should be completed in order within each phase.
 3. ✅ **Planning** - Created implementation approach
 4. ✅ **Tasks** - Broke down work into actionable items
 5. ✅ **Implementation** - Ready to execute!
+
+## Clarifications Applied
+
+{clarifications if clarifications else '*No clarifications were provided.*'}
 
 {f"## Implementation Notes\\n\\n{user_input}" if user_input else ""}
 

@@ -62,12 +62,6 @@
           <section id="scenario-selector" class="mt-4" aria-labelledby="scenario-heading">
             <div class="d-flex flex-justify-between flex-items-center mb-2">
               <h3 id="scenario-heading">Select a Demo Scenario</h3>
-              <button class="btn btn-primary" 
-                      @click="showCustomScenarioForm = true"
-                      aria-haspopup="dialog">
-                <span class="mr-1" aria-hidden="true">➕</span>
-                Create Custom
-              </button>
             </div>
             <div class="d-flex flex-wrap" style="gap: 1rem;" role="list" aria-label="Available scenarios">
               <template x-for="scenario in scenarios" :key="scenario.id">
@@ -96,120 +90,116 @@
             <div x-show="scenarios.length === 0 && !isLoading" class="blankslate" role="status">
               <p class="text-gray">Loading scenarios...</p>
             </div>
-          </section>
-          
-          <!-- Custom Scenario Modal -->
-          <div x-show="showCustomScenarioForm" 
-               class="custom-scenario-modal"
-               @keydown.escape.window="showCustomScenarioForm = false"
-               x-transition:enter="fade-in"
-               x-transition:leave="fade-out">
-            <div class="custom-scenario-modal__content custom-scenario-form" @click.stop>
-              <div class="custom-scenario-form__header">
-                <h3 class="custom-scenario-form__title">Create Custom Scenario</h3>
-                <p class="custom-scenario-form__subtitle">Create a demo scenario tailored to your audience's industry</p>
+
+            <!-- Custom Scenario Section (shown only when Custom tile is selected) -->
+            <div id="custom-scenario-section" class="Box mt-4" x-show="showCustomScenarioForm">
+              <div class="Box-header">
+                <h3 class="Box-title">Custom Scenario</h3>
               </div>
-              
-              <!-- Form Error Message -->
-              <div x-show="customScenarioError" class="form-message form-message--error mb-3">
-                <span class="form-message__icon">⚠️</span>
-                <div class="form-message__content">
-                  <div class="form-message__title">Validation Error</div>
-                  <div class="form-message__text" x-text="customScenarioError"></div>
+              <div class="Box-body">
+                <p class="text-small text-gray mb-3">Create a scenario using only your input. The workflow will carry context forward across phases.</p>
+
+                <!-- Form Error Message -->
+                <div x-show="customScenarioError" class="form-message form-message--error mb-3">
+                  <span class="form-message__icon">⚠️</span>
+                  <div class="form-message__content">
+                    <div class="form-message__title">Validation Error</div>
+                    <div class="form-message__text" x-text="customScenarioError"></div>
+                  </div>
                 </div>
-              </div>
-              
-              <!-- Title Field -->
-              <div class="form-field" :class="{'form-field--error': customScenarioErrors.title}">
-                <label class="form-field__label form-field__label--required">Feature Title</label>
-                <input type="text" 
-                       class="form-field__input" 
-                       x-model="customScenarioData.title"
-                       placeholder="e.g., Real-time Analytics Dashboard"
-                       maxlength="100">
-                <div class="d-flex flex-justify-between">
-                  <span class="form-field__error" x-show="customScenarioErrors.title" x-text="customScenarioErrors.title"></span>
-                  <span class="form-field__char-count" 
-                        :class="{'form-field__char-count--warning': customScenarioData.title.length > 80}"
-                        x-text="`${customScenarioData.title.length}/100`"></span>
-                </div>
-              </div>
-              
-              <!-- Description Field -->
-              <div class="form-field" :class="{'form-field--error': customScenarioErrors.description}">
-                <label class="form-field__label form-field__label--required">Description</label>
-                <textarea class="form-field__textarea" 
-                          x-model="customScenarioData.description"
-                          placeholder="Brief overview of the feature (20-500 characters)"
-                          rows="3"
-                          maxlength="500"></textarea>
-                <div class="d-flex flex-justify-between">
-                  <span class="form-field__error" x-show="customScenarioErrors.description" x-text="customScenarioErrors.description"></span>
-                  <span class="form-field__char-count" 
-                        :class="{'form-field__char-count--warning': customScenarioData.description.length > 400, 'form-field__char-count--error': customScenarioData.description.length < 20 && customScenarioData.description.length > 0}"
-                        x-text="`${customScenarioData.description.length}/500`"></span>
-                </div>
-              </div>
-              
-              <!-- Domain Field -->
-              <div class="form-field" :class="{'form-field--error': customScenarioErrors.domain}">
-                <label class="form-field__label form-field__label--required">Industry / Domain</label>
-                <input type="text" 
-                       class="form-field__input" 
-                       x-model="customScenarioData.domain"
-                       placeholder="e.g., Healthcare, Finance, Retail"
-                       maxlength="50">
-                <span class="form-field__error" x-show="customScenarioErrors.domain" x-text="customScenarioErrors.domain"></span>
-              </div>
-              
-              <!-- Feature Description (Optional) -->
-              <div class="form-field">
-                <label class="form-field__label">Detailed Feature Description (Optional)</label>
-                <textarea class="form-field__textarea" 
-                          x-model="customScenarioData.feature_description"
-                          placeholder="Provide additional context about the feature requirements, user stories, or technical constraints..."
-                          rows="4"
-                          maxlength="2000"></textarea>
-                <span class="form-field__hint">This will be used as the initial prompt for the workflow</span>
-              </div>
-              
-              <!-- Tech Stack (Optional) -->
-              <div class="form-field">
-                <label class="form-field__label">Tech Stack (Optional)</label>
-                <div class="tech-stack-input">
-                  <template x-for="(tech, index) in customScenarioData.tech_stack" :key="index">
-                    <span class="tech-stack-tag">
-                      <span x-text="tech"></span>
-                      <button type="button" class="tech-stack-tag__remove" @click="removeTechStack(index)">×</button>
-                    </span>
-                  </template>
+
+                <!-- Title Field -->
+                <div class="form-field" :class="{'form-field--error': customScenarioErrors.title}">
+                  <label class="form-field__label form-field__label--required">Feature Title</label>
                   <input type="text" 
-                         class="tech-stack-input__field"
-                         x-model="techStackInput"
-                         @keydown.enter.prevent="addTechStack()"
-                         @keydown.comma.prevent="addTechStack()"
-                         placeholder="Type and press Enter to add...">
+                         class="form-field__input" 
+                         x-model="customScenarioData.title"
+                         placeholder="e.g., Real-time Analytics Dashboard"
+                         maxlength="100">
+                  <div class="d-flex flex-justify-between">
+                    <span class="form-field__error" x-show="customScenarioErrors.title" x-text="customScenarioErrors.title"></span>
+                    <span class="form-field__char-count" 
+                          :class="{'form-field__char-count--warning': customScenarioData.title.length > 80}"
+                          x-text="`${customScenarioData.title.length}/100`"></span>
+                  </div>
                 </div>
-                <span class="form-field__hint">Add technologies like Python, React, PostgreSQL</span>
-              </div>
-              
-              <!-- Form Actions -->
-              <div class="form-actions">
-                <button type="button" 
-                        class="form-actions__button form-actions__button--secondary"
-                        @click="showCustomScenarioForm = false; resetCustomScenarioForm()">
-                  Cancel
-                </button>
-                <button type="button" 
-                        class="form-actions__button form-actions__button--primary"
-                        :class="{'btn-submit--loading': isCreatingScenario}"
-                        :disabled="isCreatingScenario"
-                        @click="createCustomScenario()">
-                  Create Scenario
-                </button>
+
+                <!-- Description Field -->
+                <div class="form-field" :class="{'form-field--error': customScenarioErrors.description}">
+                  <label class="form-field__label form-field__label--required">Description</label>
+                  <textarea class="form-field__textarea" 
+                            x-model="customScenarioData.description"
+                            placeholder="Brief overview of the feature (20-500 characters)"
+                            rows="3"
+                            maxlength="500"></textarea>
+                  <div class="d-flex flex-justify-between">
+                    <span class="form-field__error" x-show="customScenarioErrors.description" x-text="customScenarioErrors.description"></span>
+                    <span class="form-field__char-count" 
+                          :class="{'form-field__char-count--warning': customScenarioData.description.length > 400, 'form-field__char-count--error': customScenarioData.description.length < 20 && customScenarioData.description.length > 0}"
+                          x-text="`${customScenarioData.description.length}/500`"></span>
+                  </div>
+                </div>
+
+                <!-- Domain Field -->
+                <div class="form-field" :class="{'form-field--error': customScenarioErrors.domain}">
+                  <label class="form-field__label form-field__label--required">Industry / Domain</label>
+                  <input type="text" 
+                         class="form-field__input" 
+                         x-model="customScenarioData.domain"
+                         placeholder="e.g., Healthcare, Finance, Retail"
+                         maxlength="50">
+                  <span class="form-field__error" x-show="customScenarioErrors.domain" x-text="customScenarioErrors.domain"></span>
+                </div>
+
+                <!-- Feature Description (Optional) -->
+                <div class="form-field">
+                  <label class="form-field__label">Detailed Feature Description (Optional)</label>
+                  <textarea class="form-field__textarea" 
+                            x-model="customScenarioData.feature_description"
+                            placeholder="Provide additional context about the feature requirements, user stories, or technical constraints..."
+                            rows="4"
+                            maxlength="2000"></textarea>
+                  <span class="form-field__hint">This will be used as the initial prompt for the workflow</span>
+                </div>
+
+                <!-- Tech Stack (Optional) -->
+                <div class="form-field">
+                  <label class="form-field__label">Tech Stack (Optional)</label>
+                  <div class="tech-stack-input">
+                    <template x-for="(tech, index) in customScenarioData.tech_stack" :key="index">
+                      <span class="tech-stack-tag">
+                        <span x-text="tech"></span>
+                        <button type="button" class="tech-stack-tag__remove" @click="removeTechStack(index)">×</button>
+                      </span>
+                    </template>
+                    <input type="text" 
+                           class="tech-stack-input__field"
+                           x-model="techStackInput"
+                           @keydown.enter.prevent="addTechStack()"
+                           @keydown.comma.prevent="addTechStack()"
+                           placeholder="Type and press Enter to add...">
+                  </div>
+                  <span class="form-field__hint">Add technologies like Python, React, PostgreSQL</span>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                  <button type="button" 
+                          class="form-actions__button form-actions__button--secondary"
+                          @click="resetCustomScenarioForm()">
+                    Reset
+                  </button>
+                  <button type="button" 
+                          class="form-actions__button form-actions__button--primary"
+                          :class="{'btn-submit--loading': isCreatingScenario}"
+                          :disabled="isCreatingScenario"
+                          @click="createCustomScenario()">
+                    Create Scenario
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
       
@@ -278,12 +268,13 @@
         </div>
       </div>
       
-      <!-- Phase Input Section (Interactive input for each phase) -->
-      <div x-show="selectedScenario && workflowState" class="Box mt-4 fade-in">
+      <!-- Phase Input Section (Only for Custom Scenarios) -->
+      <div x-show="selectedScenario && workflowState && isCustomScenario()" class="Box mt-4 fade-in">
         <div class="Box-header">
           <h2 class="Box-title">
             <span class="mr-2" x-text="getPhaseInputIcon()"></span>
             <span x-text="getPhaseInputTitle()"></span>
+            <span class="Label Label--success ml-2">Custom Scenario</span>
           </h2>
         </div>
         <div class="Box-body">
@@ -293,7 +284,20 @@
               <span class="phase-input-icon" x-text="getPhaseInputIcon()"></span>
               <div>
                 <h4 class="phase-input-title" x-text="getPhaseInputTitle()"></h4>
-                <p class="phase-input-subtitle">Provide your input to generate a customized artifact for this phase</p>
+                <p class="phase-input-subtitle">Provide your input to generate a customized artifact for this phase. Your input will build on previous phases.</p>
+              </div>
+            </div>
+
+            <!-- Previous Context & Outputs (Custom Scenarios) -->
+            <div class="Box Box--condensed mb-3" x-show="hasCustomPreviousContext()">
+              <div class="Box-header d-flex flex-items-center">
+                <span class="mr-2">📋</span>
+                <strong>Previous Context &amp; Outputs</strong>
+              </div>
+              <div class="Box-body" style="background-color: #f6f8fa;">
+                <blockquote class="mb-0" style="border-left: 4px solid #0969da; padding-left: 16px; margin: 0; font-style: italic;">
+                  <pre class="mb-0" style="white-space: pre-wrap; margin: 0; font-style: italic;" x-text="getCustomPreviousContextText()"></pre>
+                </blockquote>
               </div>
             </div>
             
@@ -352,6 +356,37 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+      
+      <!-- Demo Scenario Info (Only for Demo Scenarios) -->
+      <div x-show="selectedScenario && workflowState && !isCustomScenario()" class="Box mt-4 fade-in Box--blue">
+        <div class="Box-header">
+          <h2 class="Box-title">
+            <span class="mr-2">🎬</span>
+            Demo Mode - Simulated User Input
+          </h2>
+        </div>
+        <div class="Box-body">
+          <p class="text-small text-gray mb-2" x-text="getDemoSimulatedInputDescription()"></p>
+          
+          <!-- Simulated Input Display -->
+          <div class="Box Box--condensed mb-3">
+            <div class="Box-header d-flex flex-items-center">
+              <span class="mr-2" x-text="getDemoSimulatedInputIcon()"></span>
+              <strong x-text="getDemoSimulatedInputTitle()"></strong>
+            </div>
+            <div class="Box-body" style="background-color: #f6f8fa;">
+              <blockquote class="mb-0" style="border-left: 4px solid #0969da; padding-left: 16px; margin: 0; font-style: italic;">
+                <pre class="mb-0" style="white-space: pre-wrap; margin: 0; font-style: italic;" x-text="getDemoSimulatedInputText()"></pre>
+              </blockquote>
+            </div>
+          </div>
+          
+          <p class="text-small text-gray">
+            Use the <strong>Previous</strong> / <strong>Next</strong> buttons to step through each phase and see the generated artifacts.
+            To create your own scenario with custom input, use the <strong>Custom Scenario</strong> section above.
+          </p>
         </div>
       </div>
       

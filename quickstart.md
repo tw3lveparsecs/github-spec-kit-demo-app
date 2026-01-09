@@ -14,6 +14,30 @@ git clone <repository-url>
 cd github-spec-kit-demo
 ```
 
+### Option A: Use the Startup Script (Recommended)
+
+This repo includes cross-OS startup scripts:
+
+- Windows (PowerShell): `./scripts/start.ps1`
+- macOS/Linux (Bash): `./scripts/start.sh`
+
+They will create `backend/.venv` (if missing), install dependencies, and start the backend on port 5000.
+
+Windows PowerShell:
+
+```powershell
+./scripts/start.ps1
+```
+
+macOS/Linux:
+
+```bash
+chmod +x ./scripts/start.sh
+./scripts/start.sh
+```
+
+### Option B: Manual Setup
+
 ### 2. Install Backend Dependencies
 
 ```bash
@@ -57,7 +81,7 @@ Expected response:
 curl http://localhost:5000/api/scenarios
 ```
 
-Expected: List of 3 pre-loaded scenarios (user-authentication, ecommerce-checkout, data-dashboard)
+Expected: List of available scenarios (currently includes `ecommerce-checkout`)
 
 ## Docker Development
 

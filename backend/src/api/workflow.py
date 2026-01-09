@@ -7,12 +7,14 @@ from datetime import datetime
 from flask import jsonify, Response, request
 
 from api import api_bp
+from services.scenario_service import ScenarioService
 from services.session_service import SessionService
 from services.workflow_service import WorkflowService
 from services.artifact_generator import ArtifactGenerator
 
 logger = logging.getLogger(__name__)
 session_service = SessionService()
+scenario_service = ScenarioService()
 workflow_service = WorkflowService()
 artifact_generator = ArtifactGenerator()
 
@@ -26,6 +28,9 @@ def reset_workflow() -> Response:
         JSON response with reset confirmation.
     """
     try:
+        # Reset should restore the app to a clean slate, including removing any
+        # custom scenarios created during the session.
+        scenario_service.clear_custom_scenarios()
         session = session_service.reset_session()
         session.log_action("reset", "Demo reset to initial state")
 
@@ -183,6 +188,14 @@ def submit_phase_input(scenario_id: str) -> Response:
             session.phase_inputs
         )
 
+        # Persist the generated artifact for later phases to reference as context
+        try:
+            session.phase_inputs.setdefault(phase_name, {})
+            session.phase_inputs[phase_name]["artifact"] = artifact
+            session.phase_inputs[phase_name]["artifact_markdown"] = artifact.get("content_markdown", "")
+        except Exception as e:
+            logger.warning(f"Failed to persist artifact in session for {phase_name}: {e}")
+
         logger.info(f"Generated artifact for phase {phase_name} with user input")
 
         return jsonify({
@@ -197,6 +210,56 @@ def submit_phase_input(scenario_id: str) -> Response:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"Error processing phase input: {e}")
+        raise
+
+
+@api_bp.route("/workflow/<scenario_id>/artifact/<phase_name>", methods=["GET"])
+def generate_artifact_for_phase(scenario_id: str, phase_name: str) -> Response:
+    """
+    GET /api/workflow/{scenarioId}/artifact/{phaseName} - Generate artifact for a phase.
+
+    Generates an artifact for the specified phase, incorporating context from
+    all previous phases including user inputs.
+
+    Args:
+        scenario_id: The scenario identifier.
+        phase_name: The phase name (specify, clarify, plan, tasks, implement).
+
+    Returns:
+        JSON response with generated artifact including previous context.
+    """
+    try:
+        session = session_service.get_current_session()
+        phase_inputs = getattr(session, 'phase_inputs', {}) or {}
+        
+        artifact = workflow_service.generate_artifact_with_context(
+            scenario_id, phase_name, phase_inputs
+        )
+
+        # Persist the generated artifact for later phases to reference as context.
+        # This is important for demo scenarios where phases advance without explicit POSTed input.
+        if not hasattr(session, 'phase_inputs') or session.phase_inputs is None:
+            session.phase_inputs = {}
+        session.phase_inputs.setdefault(phase_name, {})
+        session.phase_inputs[phase_name].setdefault("clarifications", phase_inputs.get(phase_name, {}).get("clarifications", []))
+        session.phase_inputs[phase_name].setdefault("input", phase_inputs.get(phase_name, {}).get("input", ""))
+        session.phase_inputs[phase_name]["artifact"] = artifact
+        session.phase_inputs[phase_name]["artifact_markdown"] = artifact.get("content_markdown", "")
+
+        logger.info(f"Generated artifact for phase {phase_name} with context")
+
+        return jsonify({
+            "artifact": artifact,
+            "phase": phase_name,
+            "context_from_phases": list(phase_inputs.keys()),
+            "session_id": str(session.session_id)
+        })
+
+    except ValueError as e:
+        logger.warning(f"Cannot generate artifact: {e}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error generating artifact: {e}")
         raise
 
 

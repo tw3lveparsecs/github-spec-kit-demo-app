@@ -129,6 +129,16 @@ const apiClient = {
    */
   async getPhaseInputs(scenarioId) {
     return apiRequest(`/workflow/${scenarioId}/inputs`);
+  },
+
+  /**
+   * Generate artifact for a phase with context from all previous phases.
+   * @param {string} scenarioId - Scenario identifier
+   * @param {string} phaseName - Phase name
+   * @returns {Promise<object>} Generated artifact with context
+   */
+  async generateArtifactWithContext(scenarioId, phaseName) {
+    return apiRequest(`/workflow/${scenarioId}/artifact/${phaseName}`);
   }
 };
 

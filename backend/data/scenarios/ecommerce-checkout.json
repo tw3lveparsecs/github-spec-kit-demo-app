@@ -5,6 +5,28 @@
   "domain": "ecommerce",
   "is_custom": false,
   "initial_prompt": "Create an e-commerce checkout flow with shopping cart, payment integration, inventory management, and order tracking",
+  "demo_clarifications": [
+    {
+      "question": "Which payment providers should be supported?",
+      "answer": "Support Stripe (cards + Apple Pay/Google Pay) as the primary provider, with PayPal as an optional alternative."
+    },
+    {
+      "question": "Do we support guest checkout and saved payment methods?",
+      "answer": "Yes—guest checkout is required. Logged-in users can save payment methods via Stripe setup intents."
+    },
+    {
+      "question": "How should taxes and shipping be calculated?",
+      "answer": "Use a third-party tax service (e.g., Stripe Tax) and calculate shipping via fixed-rate tables by region with free shipping over a configurable threshold."
+    },
+    {
+      "question": "What should happen if inventory changes during checkout?",
+      "answer": "Reserve inventory at checkout start for 10 minutes; if stock becomes unavailable, show an error and return the user to cart with updated quantities."
+    },
+    {
+      "question": "What order confirmation and notification requirements exist?",
+      "answer": "Send an order confirmation email immediately and a shipping confirmation when fulfillment updates. Provide an order status page with tracking links."
+    }
+  ],
   "workflow_phases": [
     {
       "phase_name": "specify",

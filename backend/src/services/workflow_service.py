@@ -97,6 +97,14 @@ class WorkflowService:
         next_phase = scenario.workflow_phases[next_index]
         next_phase_name = next_phase["phase_name"]
 
+        # Generate artifact from previous phase's input (if any)
+        previous_artifact = None
+        phase_inputs = getattr(session, 'phase_inputs', {}) or {}
+        if current_phase in phase_inputs:
+            previous_artifact = self._generate_artifact_from_input(
+                scenario, current_phase, phase_inputs
+            )
+
         # Update session
         self.session_service.update_session(scenario_id, next_phase_name)
         session.log_action("phase_advance", f"Advanced to {next_phase_name}")
@@ -115,7 +123,46 @@ class WorkflowService:
             "total_phases": len(scenario.workflow_phases),
             "session_id": str(session.session_id),
             "constitution_check": constitution_check,
+            "previous_phase_artifact": previous_artifact,
+            "previous_phase_input": phase_inputs.get(current_phase),
         }
+
+    def _generate_artifact_from_input(
+        self, 
+        scenario: DemoScenario, 
+        phase_name: str, 
+        phase_inputs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Generate an artifact from the user's input for a specific phase.
+
+        Args:
+            scenario: The demo scenario.
+            phase_name: The phase name.
+            phase_inputs: Dictionary of all phase inputs.
+
+        Returns:
+            Dictionary with artifact data or None.
+        """
+        try:
+            phase_data = phase_inputs.get(phase_name, {})
+            user_input = phase_data.get("input", "")
+            clarifications = phase_data.get("clarifications", [])
+
+            # Build context
+            context = self._build_artifact_context(
+                scenario, phase_name, user_input, clarifications, phase_inputs
+            )
+
+            # Generate artifact
+            artifact = self.artifact_generator.generate_with_context(
+                phase_name, scenario, context
+            )
+
+            return artifact.to_dict() if hasattr(artifact, 'to_dict') else artifact
+        except Exception as e:
+            logger.warning(f"Failed to generate artifact from input: {e}")
+            return None
 
     def _run_constitution_check_for_phase(
         self, scenario_id: str, phase_name: str
@@ -233,6 +280,55 @@ class WorkflowService:
 
         return artifact.to_dict() if hasattr(artifact, 'to_dict') else artifact
 
+    def generate_artifact_with_context(
+        self,
+        scenario_id: str,
+        phase_name: str,
+        all_phase_inputs: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate an artifact for a phase with context from all previous phases.
+
+        This method creates context-aware artifacts that incorporate user inputs
+        from all previous phases to provide continuity.
+
+        Args:
+            scenario_id: The scenario identifier.
+            phase_name: The phase to generate artifact for.
+            all_phase_inputs: Dictionary of all inputs from previous phases.
+
+        Returns:
+            Dictionary with the generated artifact.
+
+        Raises:
+            ValueError: If scenario not found.
+        """
+        scenario = self.scenario_service.get_scenario_by_id(scenario_id)
+        if scenario is None:
+            raise ValueError(f"Scenario not found: {scenario_id}")
+
+        if all_phase_inputs is None:
+            all_phase_inputs = {}
+
+        # Get current phase input if any
+        current_input = all_phase_inputs.get(phase_name, {})
+        user_input = current_input.get("input", "")
+        clarifications = current_input.get("clarifications", [])
+
+        # Build context from all phase inputs
+        context = self._build_artifact_context(
+            scenario, phase_name, user_input, clarifications, all_phase_inputs
+        )
+
+        # Generate artifact based on phase
+        artifact = self.artifact_generator.generate_with_context(
+            phase_name, scenario, context
+        )
+
+        logger.info(f"Generated {phase_name} artifact with context for {scenario_id}")
+
+        return artifact.to_dict() if hasattr(artifact, 'to_dict') else artifact
+
     def _build_artifact_context(
         self,
         scenario: DemoScenario,
@@ -247,17 +343,63 @@ class WorkflowService:
         Combines scenario data, user inputs from all phases, and current input
         to create a comprehensive context for artifact generation.
         """
-        # Get previous phase inputs
+        # Get previous phase inputs and (optionally) previously generated artifacts.
+        # For demo scenarios, phases often have no explicit input, so we store and reuse
+        # the artifact markdown as the contextual output of that phase.
         specify_input = all_phase_inputs.get("specify", {}).get("input", "")
-        clarify_input = all_phase_inputs.get("clarify", {})
         plan_input = all_phase_inputs.get("plan", {}).get("input", "")
         tasks_input = all_phase_inputs.get("tasks", {}).get("input", "")
 
+        def _strip_previous_context_block(markdown: str) -> str:
+            marker = "## 📋 Previous Context"
+            if not markdown or marker not in markdown:
+                return markdown
+
+            start = markdown.find(marker)
+            if start == -1:
+                return markdown
+
+            sep_start = markdown.find("\n---", start)
+            if sep_start == -1:
+                return markdown[:start].rstrip()
+
+            sep_line_end = markdown.find("\n", sep_start + 1)
+            if sep_line_end == -1:
+                return markdown[:start].rstrip()
+
+            before = markdown[:start].rstrip()
+            after = markdown[sep_line_end + 1 :].lstrip()
+            if before and after:
+                return before + "\n\n" + after
+            return before or after
+
+        plan_artifact_markdown = _strip_previous_context_block(
+            all_phase_inputs.get("plan", {}).get("artifact_markdown", "")
+        )
+        tasks_artifact_markdown = _strip_previous_context_block(
+            all_phase_inputs.get("tasks", {}).get("artifact_markdown", "")
+        )
+
         # Build formatted clarifications
+        effective_clarifications = clarifications or []
+
+        # For demo scenarios, allow preset clarifications to simulate the clarify phase
+        # even when the user hasn't submitted any inputs.
+        if (
+            not scenario.is_custom
+            and not effective_clarifications
+            and getattr(scenario, "demo_clarifications", None)
+            and phase_name in {"clarify", "plan", "tasks", "implement"}
+        ):
+            effective_clarifications = scenario.demo_clarifications
+
         formatted_clarifications = ""
-        if clarifications:
-            qa_pairs = [f"**Q:** {c.get('question', '')}\n**A:** {c.get('answer', '')}" 
-                       for c in clarifications if c.get('answer')]
+        if effective_clarifications:
+            qa_pairs = [
+                f"**Q:** {c.get('question', '')}\n**A:** {c.get('answer', '')}"
+                for c in effective_clarifications
+                if c.get("answer")
+            ]
             formatted_clarifications = "\n\n".join(qa_pairs)
 
         context = {
@@ -270,8 +412,10 @@ class WorkflowService:
             "user_input": user_input,
             "specify_input": specify_input or scenario.initial_prompt,
             "clarifications": formatted_clarifications,
-            "plan_input": plan_input,
-            "tasks_input": tasks_input,
+            "clarifications_list": effective_clarifications,
+            # Prefer previous phase artifact output when available.
+            "plan_input": plan_artifact_markdown or plan_input,
+            "tasks_input": tasks_artifact_markdown or tasks_input,
             "tech_stack": ", ".join(getattr(scenario, 'tech_stack', []) or []),
         }
 

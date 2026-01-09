@@ -10,7 +10,6 @@ from datetime import datetime
 
 from models.demo_scenario import DemoScenario
 from services.loader import ScenarioLoader
-from services.cache import scenario_cache
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,6 @@ class ScenarioService:
         """Initialize the scenario service with a loader."""
         self.loader = ScenarioLoader()
 
-    @scenario_cache
     def list_scenarios(self) -> List[DemoScenario]:
         """
         Get all available demo scenarios.
@@ -63,6 +61,12 @@ class ScenarioService:
         Returns:
             DemoScenario object or None if not found.
         """
+        # Custom scenarios are stored in memory (no JSON file).
+        custom = self._custom_scenarios.get(scenario_id)
+        if custom is not None:
+            logger.info(f"Retrieved custom scenario: {scenario_id}")
+            return custom
+
         scenario_data = self.loader.load_scenario(scenario_id)
 
         if not scenario_data:
@@ -272,3 +276,15 @@ class ScenarioService:
             logger.info(f"Deleted custom scenario: {scenario_id}")
             return True
         return False
+
+    def clear_custom_scenarios(self) -> int:
+        """Remove all custom scenarios created in this process.
+
+        Returns:
+            Number of custom scenarios removed.
+        """
+        removed = len(self._custom_scenarios)
+        self._custom_scenarios.clear()
+        if removed:
+            logger.info(f"Cleared {removed} custom scenario(s)")
+        return removed

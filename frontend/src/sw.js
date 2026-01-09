@@ -4,7 +4,7 @@
  * Provides offline capability and caching for the demo application.
  */
 
-const CACHE_NAME = 'speckit-demo-v1';
+const CACHE_NAME = 'speckit-demo-v5';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Static assets to cache immediately

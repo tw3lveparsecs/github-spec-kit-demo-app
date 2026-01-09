@@ -76,6 +76,7 @@ function demoApp() {
         const scenario = this.scenarios.find(s => s.id === savedSession.selectedScenarioId);
         if (scenario) {
           this.selectedScenario = scenario;
+          this.showCustomScenarioForm = scenario.id === 'custom';
         }
       }
     },
@@ -89,7 +90,19 @@ function demoApp() {
 
       try {
         const response = await apiClient.getScenarios();
-        this.scenarios = response.scenarios || [];
+        const loaded = response.scenarios || [];
+
+        // Add a synthetic "Custom" scenario tile that activates the custom-scenario creation flow.
+        // This is a UI-only item (no backend scenario exists with id "custom").
+        const customTile = {
+          id: 'custom',
+          title: 'Custom',
+          description: 'Create your own scenario by entering a feature title, description, and domain.',
+          domain: 'custom',
+          is_custom: false
+        };
+
+        this.scenarios = [customTile, ...loaded.filter(s => s?.id !== 'custom')];
         console.log(`Loaded ${this.scenarios.length} scenarios`);
       } catch (error) {
         this.showError('Failed to load scenarios: ' + error.message);
@@ -103,6 +116,32 @@ function demoApp() {
      * @param {object} scenario - The scenario to select
      */
     async selectScenario(scenario) {
+      // "Custom" is a UI-only tile that scrolls/focuses the custom scenario form.
+      if (scenario?.id === 'custom') {
+        this.selectedScenario = scenario;
+        this.showCustomScenarioForm = true;
+        stateManager.updateSession({
+          selectedScenarioId: scenario.id,
+          selectedAt: new Date().toISOString()
+        });
+        this.workflowState = null;
+        this.currentArtifact = null;
+        this.resetPhaseInputs();
+
+        this.showStatus('Create a custom scenario below');
+
+        // Scroll to the custom scenario section and focus the first field.
+        requestAnimationFrame(() => {
+          const section = document.getElementById('custom-scenario-section');
+          section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          const firstInput = section?.querySelector('input, textarea, select, button');
+          firstInput?.focus?.();
+        });
+        return;
+      }
+
+      this.showCustomScenarioForm = false;
       this.selectedScenario = scenario;
       stateManager.updateSession({ 
         selectedScenarioId: scenario.id,
@@ -113,10 +152,21 @@ function demoApp() {
       
       // Initialize workflow for this scenario
       await this.initializeWorkflow(scenario.id);
+
+      // For custom scenarios, prefill the first phase input so it "appears" immediately
+      // (without requiring the user to manually copy the scenario prompt).
+      if (this.isCustomScenario() && this.workflowState?.current_phase?.phase_name === 'specify') {
+        const seed = (scenario.initial_prompt || scenario.feature_description || '').trim();
+        if (seed && !this.phaseInputs?.specify && !this.currentPhaseInput?.trim()) {
+          this.currentPhaseInput = seed;
+        }
+      }
     },
 
     /**
      * Initialize workflow for the selected scenario.
+     * For demo scenarios, auto-generates the first phase artifact.
+     * For custom scenarios, waits for user input.
      * @param {string} scenarioId - The scenario ID
      */
     async initializeWorkflow(scenarioId) {
@@ -126,6 +176,11 @@ function demoApp() {
         this.workflowState = response;
         
         console.log('Workflow initialized:', response);
+        
+        // For demo scenarios, auto-generate the first phase artifact
+        if (!this.isCustomScenario()) {
+          await this.generateArtifact(response.current_phase.phase_name);
+        }
       } catch (error) {
         this.showError('Failed to initialize workflow: ' + error.message);
       } finally {
@@ -135,19 +190,52 @@ function demoApp() {
 
     /**
      * Advance to the next workflow phase.
+     * For demo scenarios: auto-generates the artifact for the new phase.
+     * For custom scenarios: shows the input form for user to provide context.
      */
     async nextPhase() {
       if (!this.selectedScenario) return;
+
+      const previousPhaseName = this.workflowState?.current_phase?.phase_name;
       
       this.isLoading = true;
       try {
         const response = await apiClient.advanceWorkflow(this.selectedScenario.id);
         this.workflowState = response;
         
-        // Generate artifact for this phase
-        await this.generateArtifact(response.current_phase.phase_name);
-        
-        this.showStatus(`Advanced to: ${response.current_phase.display_name}`);
+        if (this.isCustomScenario()) {
+          // Persist the previous phase output so it can be shown as context later.
+          if (previousPhaseName && response.previous_phase_artifact) {
+            this.phaseInputs[previousPhaseName] = {
+              ...(this.phaseInputs[previousPhaseName] || {}),
+              ...(response.previous_phase_input || {}),
+              artifact: response.previous_phase_artifact,
+              artifact_markdown: response.previous_phase_artifact?.content_markdown || '',
+              submittedAt: (this.phaseInputs[previousPhaseName]?.submittedAt || new Date().toISOString())
+            };
+          }
+
+          const currentPhaseName = response.current_phase?.phase_name;
+          const submittedForCurrent = currentPhaseName ? this.phaseInputs[currentPhaseName] : null;
+
+          // For the final step, show the wrap-up artifact automatically (it includes "What's Next?").
+          if (currentPhaseName === 'implement') {
+            await this.generateArtifact('implement');
+            this.showStatus(`Advanced to: ${response.current_phase.display_name}`);
+          } else if (submittedForCurrent?.artifact) {
+            // If we've already generated an artifact for this phase, show it.
+            this.currentArtifact = submittedForCurrent.artifact;
+            this.showStatus(`Advanced to: ${response.current_phase.display_name}`);
+          } else {
+            // Otherwise prompt for input for this phase.
+            this.currentArtifact = null;
+            this.showStatus(`Advanced to: ${response.current_phase.display_name} - Enter your input to continue`);
+          }
+        } else {
+          // Demo scenario: auto-generate artifact for this phase
+          await this.generateArtifact(response.current_phase.phase_name);
+          this.showStatus(`Advanced to: ${response.current_phase.display_name}`);
+        }
       } catch (error) {
         this.showError('Failed to advance phase: ' + error.message);
       } finally {
@@ -177,10 +265,21 @@ function demoApp() {
         const response = await apiClient.jumpToPhase(this.selectedScenario.id, phaseName);
         this.workflowState = response;
         
-        // Generate artifact for this phase
-        await this.generateArtifact(response.current_phase.phase_name);
-        
-        this.showStatus(`Jumped to: ${response.current_phase.display_name}`);
+        if (this.isCustomScenario()) {
+          // Custom scenario: check if we have submitted input for this phase
+          const submittedInput = this.phaseInputs[phaseName];
+          if (submittedInput?.artifact) {
+            this.currentArtifact = submittedInput.artifact;
+          } else {
+            // Clear artifact to prompt for input
+            this.currentArtifact = null;
+          }
+          this.showStatus(`Jumped to: ${response.current_phase.display_name} - Enter your input to continue`);
+        } else {
+          // Demo scenario: auto-generate artifact for this phase
+          await this.generateArtifact(response.current_phase.phase_name);
+          this.showStatus(`Jumped to: ${response.current_phase.display_name}`);
+        }
       } catch (error) {
         this.showError('Failed to jump to phase: ' + error.message);
       } finally {
@@ -225,6 +324,10 @@ function demoApp() {
         // Update artifact from response
         if (response.artifact) {
           this.currentArtifact = response.artifact;
+
+          // Persist the artifact so later phases can show previous outputs.
+          this.phaseInputs[currentPhaseName].artifact = response.artifact;
+          this.phaseInputs[currentPhaseName].artifact_markdown = response.artifact?.content_markdown || '';
         }
 
         this.showStatus(`Input submitted for ${currentPhaseName} phase`);
@@ -305,6 +408,80 @@ function demoApp() {
     },
 
     /**
+     * Check if the current scenario is a custom scenario.
+     * Custom scenarios require user input at each phase.
+     * Demo scenarios show pre-built artifacts.
+     * @returns {boolean} True if custom scenario
+     */
+    isCustomScenario() {
+      return this.selectedScenario?.is_custom === true;
+    },
+
+    _truncateForContextPanel(text, maxChars = 1200) {
+      const t = (text || '').toString().trim();
+      if (!t) return '';
+      if (t.length <= maxChars) return t;
+      return t.slice(0, maxChars).trimEnd() + '\n\n…';
+    },
+
+    _formatClarificationsForContextPanel(clarifications) {
+      if (!Array.isArray(clarifications) || clarifications.length === 0) return '';
+      const answered = clarifications.filter(q => (q?.answer || '').toString().trim());
+      if (answered.length === 0) return '';
+      return answered
+        .map((item, idx) => `Q${idx + 1}: ${item.question || ''}\nA${idx + 1}: ${item.answer || ''}`)
+        .join('\n\n');
+    },
+
+    hasCustomPreviousContext() {
+      if (!this.isCustomScenario()) return false;
+      const current = this.workflowState?.current_phase?.phase_name;
+      const order = ['specify', 'clarify', 'plan', 'tasks', 'implement'];
+      const currentIndex = order.indexOf(current);
+      if (currentIndex <= 0) return false;
+      return order.slice(0, currentIndex).some(p => {
+        const d = this.phaseInputs?.[p];
+        return !!(d && ((d.artifact_markdown || d.artifact?.content_markdown) || d.input || (d.clarifications && d.clarifications.length)));
+      });
+    },
+
+    getCustomPreviousContextText() {
+      const current = this.workflowState?.current_phase?.phase_name;
+      const order = ['specify', 'clarify', 'plan', 'tasks', 'implement'];
+      const display = {
+        specify: 'Specification',
+        clarify: 'Clarification',
+        plan: 'Planning',
+        tasks: 'Tasks',
+        implement: 'Implementation'
+      };
+
+      const currentIndex = order.indexOf(current);
+      if (currentIndex <= 0) return 'No previous steps yet.';
+
+      const blocks = [];
+      for (const phase of order.slice(0, currentIndex)) {
+        const data = this.phaseInputs?.[phase];
+        if (!data) continue;
+
+        const parts = [];
+        const clar = this._formatClarificationsForContextPanel(data.clarifications);
+        const input = (data.input || '').toString().trim();
+        if (clar) parts.push(`Input:\n${this._truncateForContextPanel(clar, 800)}`);
+        else if (input) parts.push(`Input:\n${this._truncateForContextPanel(input, 800)}`);
+
+        const output = (data.artifact_markdown || data.artifact?.content_markdown || '').toString().trim();
+        if (output) parts.push(`Output:\n${this._truncateForContextPanel(output, 1200)}`);
+
+        if (parts.length) {
+          blocks.push(`Step ${order.indexOf(phase) + 1}: ${display[phase] || phase}\n${parts.join('\n\n')}`);
+        }
+      }
+
+      return blocks.length ? blocks.join('\n\n---\n\n') : 'No previous steps yet.';
+    },
+
+    /**
      * Reset phase inputs when demo is reset.
      */
     resetPhaseInputs() {
@@ -315,44 +492,45 @@ function demoApp() {
 
     /**
      * Generate artifact for the current phase.
+     * Calls the backend to generate an artifact with context from all previous phases.
      * @param {string} phaseName - The phase name
      */
     async generateArtifact(phaseName) {
       // Check if we have submitted input for this phase
       const submittedInput = this.phaseInputs[phaseName];
       
-      if (submittedInput) {
+      if (submittedInput && submittedInput.artifact) {
         // Use the artifact from the submitted input
-        // It was already generated when input was submitted
+        this.currentArtifact = submittedInput.artifact;
         return;
       }
 
-      // For demo purposes, create a mock artifact if no input was submitted
-      // In a real implementation, this would call the backend
-      const artifactTypes = {
-        'specify': 'spec',
-        'clarify': 'clarify',
-        'plan': 'plan',
-        'tasks': 'tasks',
-        'implement': 'implement'
-      };
-      
-      const artifactContent = {
-        'spec': '# Feature Specification\n\n## Overview\nThis is a detailed specification...\n\n*Submit your input above to generate a customized specification.*',
-        'clarify': '# Clarification Summary\n\n## Questions\nAnswer the questions above to refine the specification...\n\n*Submit your answers to generate clarification notes.*',
-        'plan': '# Implementation Plan\n\n## Architecture\nHigh-level architecture...\n\n*Submit your technical preferences to customize the plan.*',
-        'tasks': '# Task Breakdown\n\n## Phase 1: Setup\n- [ ] Task 1\n- [ ] Task 2\n\n*Submit additional requirements to customize the task list.*',
-        'implement': '# Implementation\n\n```python\ndef example():\n    pass\n```\n\n*Submit implementation notes to finalize.*'
-      };
-      
-      this.currentArtifact = {
-        artifact_type: artifactTypes[phaseName] || 'spec',
-        phase_name: phaseName,
-        content_markdown: artifactContent[artifactTypes[phaseName]] || '',
-        content_html: `<div>${artifactContent[artifactTypes[phaseName]] || ''}</div>`,
-        generation_duration_ms: 250,
-        tokens_used: 150
-      };
+      // Call backend to generate artifact with context from previous phases
+      this.isGeneratingArtifact = true;
+      try {
+        const response = await apiClient.generateArtifactWithContext(
+          this.selectedScenario.id,
+          phaseName
+        );
+        
+        if (response.artifact) {
+          this.currentArtifact = response.artifact;
+          console.log(`Generated artifact for ${phaseName} with context from:`, response.context_from_phases);
+        }
+      } catch (error) {
+        console.error('Failed to generate artifact:', error);
+        // Fallback to a simple prompt message
+        this.currentArtifact = {
+          artifact_type: phaseName === 'specify' ? 'spec' : phaseName,
+          phase_name: phaseName,
+          content_markdown: `# ${this.getPhaseInputTitle()}\n\nEnter your input above and click "Generate Artifact" to create a customized ${phaseName} document.`,
+          content_html: `<h1>${this.getPhaseInputTitle()}</h1><p>Enter your input above and click "Generate Artifact" to create a customized ${phaseName} document.</p>`,
+          generation_duration_ms: 0,
+          tokens_used: 0
+        };
+      } finally {
+        this.isGeneratingArtifact = false;
+      }
       
       // Update artifact viewer
       const viewer = this.$refs.artifactViewer;
@@ -390,6 +568,43 @@ function demoApp() {
     },
 
     /**
+     * Demo scenarios: show phase-specific simulated user input.
+     * Step 1: initial prompt; Step 2: clarifying Q/A (if provided by scenario).
+     */
+    getDemoSimulatedInputDescription() {
+      const phase = this.workflowState?.current_phase?.phase_name;
+      if (phase === 'clarify') {
+        return 'This demo scenario includes a simulated clarification round (example questions and answers):';
+      }
+      return 'This demo scenario uses the following predefined specification as the simulated user input:';
+    },
+
+    getDemoSimulatedInputTitle() {
+      const phase = this.workflowState?.current_phase?.phase_name;
+      if (phase === 'clarify') {
+        return 'Clarifying Questions & Answers (Simulated Input)';
+      }
+      return 'Initial Specification (Simulated Input)';
+    },
+
+    getDemoSimulatedInputIcon() {
+      const phase = this.workflowState?.current_phase?.phase_name;
+      return phase === 'clarify' ? '💬' : '📝';
+    },
+
+    getDemoSimulatedInputText() {
+      const phase = this.workflowState?.current_phase?.phase_name;
+      if (phase === 'clarify') {
+        const qa = this.selectedScenario?.demo_clarifications || [];
+        if (!qa.length) return 'No clarifying Q/A defined for this scenario.';
+        return qa
+          .map((item, idx) => `Q${idx + 1}: ${item.question}\nA${idx + 1}: ${item.answer}`)
+          .join('\n\n');
+      }
+      return this.selectedScenario?.initial_prompt || 'No initial prompt defined';
+    },
+
+    /**
      * Reset the demo to initial state.
      */
     async resetDemo() {
@@ -403,10 +618,16 @@ function demoApp() {
       try {
         await apiClient.resetDemo();
         this.selectedScenario = null;
+        this.showCustomScenarioForm = false;
         this.workflowState = null;
         this.currentArtifact = null;
         this.resetPhaseInputs();
+        this.resetCustomScenarioForm();
         stateManager.clearSession();
+
+        // Refresh scenario list to reflect cleared custom scenarios.
+        await this.loadScenarios();
+
         this.showStatus('Demo reset successfully');
         console.log('Demo reset');
       } catch (error) {
@@ -551,8 +772,7 @@ function demoApp() {
         // Select the new scenario
         await this.selectScenario(data.scenario);
 
-        // Close the form and reset
-        this.showCustomScenarioForm = false;
+        // Reset the form (inline section stays visible)
         this.resetCustomScenarioForm();
 
         this.showStatus(`Created custom scenario: ${data.scenario.title}`);

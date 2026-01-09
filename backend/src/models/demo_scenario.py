@@ -42,6 +42,10 @@ class DemoScenario(BaseModel):
     feature_description: Optional[str] = None
     tech_stack: List[str] = field(default_factory=list)
 
+    # Optional preset clarifying questions/answers for demo scenarios.
+    # This is used to simulate the clarify phase without requiring user input.
+    demo_clarifications: List[Dict[str, str]] = field(default_factory=list)
+
     # Valid domains for pre-built scenarios (custom scenarios can have any domain)
     VALID_DOMAINS = [
         "security",
