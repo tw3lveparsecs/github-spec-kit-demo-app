@@ -1,13 +1,13 @@
 # Quickstart: GitHub Spec Kit Demo Application
 
-Get the demo app running locally in under 5 minutes or deploy to Azure.
+Get the demo app running locally in under 5 minutes.
 
 ## Prerequisites
 
 - **Python 3.11+**: [Download](https://www.python.org/downloads/)
 - **Git**: For cloning the repository
 - **VS Code** (optional): Recommended for best development experience
-- **Azure CLI** (for deployment): `az` command-line tool
+- **Docker** (optional): For container-based development
 
 ## Local Development
 
@@ -28,12 +28,14 @@ open http://localhost:5000
 ### Option 2: Local Setup (Traditional)
 
 **Step 1: Clone and navigate**
+
 ```bash
 git clone https://github.com/YOUR_ORG/speckit-demo-app.git
 cd speckit-demo-app
 ```
 
 **Step 2: Set up Python environment**
+
 ```bash
 # Create virtual environment
 python3 -m venv .venv
@@ -50,6 +52,7 @@ pip install -r backend/requirements-dev.txt
 ```
 
 **Step 3: Run the application**
+
 ```bash
 # Start Flask dev server
 cd backend
@@ -59,6 +62,7 @@ flask run
 ```
 
 **Step 4: Open in browser**
+
 ```bash
 # macOS
 open http://localhost:5000
@@ -75,11 +79,13 @@ You should see the GitHub Spec Kit Demo home screen with three sample scenarios!
 ## Verify Installation
 
 ### Health Check
+
 ```bash
 curl http://localhost:5000/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "healthy",
@@ -89,6 +95,7 @@ Expected response:
 ```
 
 ### List Demo Scenarios
+
 ```bash
 curl http://localhost:5000/api/scenarios
 ```
@@ -98,6 +105,7 @@ You should see 3 pre-loaded scenarios: User Authentication, Ecommerce Checkout, 
 ## Development Workflow
 
 ### Run Tests
+
 ```bash
 # All tests (unit + integration + e2e)
 pytest
@@ -111,6 +119,7 @@ open htmlcov/index.html
 ```
 
 ### Code Quality Checks
+
 ```bash
 # Format code with Black
 black src/ tests/
@@ -123,6 +132,7 @@ flake8 src/ tests/
 ```
 
 ### Run Frontend Tests
+
 ```bash
 cd frontend
 npm install  # First time only
@@ -146,17 +156,18 @@ speckit-demo-app/
 │   │   ├── js/            # JavaScript source
 │   │   └── css/           # Stylesheets
 │   └── tests/             # Frontend tests
-├── infra/                 # Azure Bicep files
 └── .devcontainer/         # Codespaces config
 ```
 
 ## Using the Demo App
 
 ### 1. Select a Scenario
+
 - Home screen shows 3 pre-loaded scenarios
 - Click any scenario card to begin
 
 ### 2. Run the Workflow
+
 - Click "Run /speckit.specify" to generate spec.md
 - Watch the animated typing effect (realistic demo!)
 - Click "Next: Clarify" to proceed
@@ -164,22 +175,26 @@ speckit-demo-app/
 - Continue through plan → tasks → implement
 
 ### 3. View Generated Artifacts
+
 - Click "View Files" panel on right
 - See spec.md, plan.md, tasks.md with syntax highlighting
 - Expand/collapse sections
 
 ### 4. Constitution Demo
+
 - Click "Constitution" tab
 - See all four principles
 - Click "Show Enforcement" to see checks in action
 - Violations appear with warning badges
 
 ### 5. Reset Demo
+
 - Click "Reset Demo" button (top right)
 - Confirm reset action
 - Returns to clean initial state (<5 seconds)
 
 ### 6. Create Custom Scenario
+
 - Click "Create Custom"
 - Enter feature description
 - Select domain (security, ecommerce, etc.)
@@ -191,6 +206,7 @@ speckit-demo-app/
 ### Port 5000 Already in Use
 
 **Solution**: Use a different port
+
 ```bash
 flask run --port 5001
 ```
@@ -198,6 +214,7 @@ flask run --port 5001
 ### Module Not Found Errors
 
 **Solution**: Ensure virtual environment is activated
+
 ```bash
 source .venv/bin/activate  # macOS/Linux
 .venv\Scripts\activate     # Windows
@@ -209,6 +226,7 @@ pip install -r backend/requirements.txt
 ### Frontend Assets Not Loading
 
 **Solution**: Clear browser cache or try incognito mode
+
 ```bash
 # Hard refresh
 Cmd+Shift+R (macOS)
@@ -218,93 +236,19 @@ Ctrl+Shift+R (Windows/Linux)
 ### Tests Failing
 
 **Solution**: Install dev dependencies
+
 ```bash
 pip install -r backend/requirements-dev.txt
 ```
 
-## Azure Deployment
+## Deployment
 
-### Prerequisites
+Cloud deployment instructions and automated deployment workflows are intentionally omitted from this quickstart.
 
-1. **Azure subscription**: Sign up at [azure.com](https://azure.com)
-2. **Azure CLI**: Install from [docs.microsoft.com](https://docs.microsoft.com/cli/azure/install-azure-cli)
-3. **Login**: `az login`
+If you need to deploy this demo, treat it like any containerized Flask app:
 
-### Deploy with Bicep
-
-**Step 1: Set deployment parameters**
-```bash
-cd infra
-
-# Edit dev.bicepparam with your values
-# - appName: unique name (e.g., "speckit-demo-yourname")
-# - location: Azure region (e.g., "eastus")
-```
-
-**Step 2: Validate deployment**
-```bash
-az deployment group validate \
-  --resource-group rg-speckit-demo \
-  --template-file main.bicep \
-  --parameters dev.bicepparam
-```
-
-**Step 3: Preview changes**
-```bash
-az deployment group what-if \
-  --resource-group rg-speckit-demo \
-  --template-file main.bicep \
-  --parameters dev.bicepparam
-```
-
-**Step 4: Deploy**
-```bash
-az deployment group create \
-  --resource-group rg-speckit-demo \
-  --template-file main.bicep \
-  --parameters dev.bicepparam
-```
-
-Deployment takes ~5-10 minutes. Once complete:
-
-```bash
-# Get app URL from deployment output
-az deployment group show \
-  --resource-group rg-speckit-demo \
-  --name main \
-  --query properties.outputs.appUrl.value
-
-# Output: https://speckit-demo-yourname.azurewebsites.net
-```
-
-### Deploy with GitHub Actions (CI/CD)
-
-**Step 1: Set up Azure credentials**
-```bash
-az ad sp create-for-rbac \
-  --name "github-actions-speckit-demo" \
-  --role contributor \
-  --scopes /subscriptions/{subscription-id}/resourceGroups/rg-speckit-demo \
-  --sdk-auth
-```
-
-Copy the JSON output.
-
-**Step 2: Add GitHub secret**
-- Go to repository Settings → Secrets and variables → Actions
-- Click "New repository secret"
-- Name: `AZURE_CREDENTIALS`
-- Value: Paste JSON from Step 1
-
-**Step 3: Trigger deployment**
-```bash
-# Push to main branch triggers CD workflow
-git push origin main
-
-# Or manually trigger in GitHub Actions tab
-```
-
-Watch progress in the Actions tab. Deployment completes in ~5 minutes.
+- build the container image from the repo root
+- run it behind your preferred hosting platform / reverse proxy
 
 ## Configuration
 
@@ -322,19 +266,7 @@ SECRET_KEY=your-secret-key-here
 MAX_CUSTOM_SCENARIOS=10
 ANIMATION_SPEED_CPS=50
 CACHE_TIMEOUT_SECONDS=3600
-
-# Azure (production only)
-APPLICATIONINSIGHTS_CONNECTION_STRING=your-connection-string
 ```
-
-### Application Insights (Production)
-
-Monitor performance in Azure:
-
-1. Navigate to Application Insights resource in Azure Portal
-2. View **Live Metrics** for real-time telemetry
-3. Check **Performance** tab for API response times
-4. Set up **Alerts** for p95 > 200ms
 
 ## Performance Tuning
 
@@ -361,12 +293,12 @@ def get_scenarios():
 
 ```javascript
 // Enable service worker for offline capability
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
 }
 
 // Lazy load demo scenarios
-import('./components/scenario-selector.js').then(module => {
+import("./components/scenario-selector.js").then((module) => {
   module.initialize();
 });
 ```
@@ -377,7 +309,7 @@ import('./components/scenario-selector.js').then(module => {
 - **Modify constitution**: Update `.specify/memory/constitution.md`
 - **Add presenter notes**: Extend data models with talking points
 - **Brand customization**: Update Primer CSS variables in `frontend/src/css/`
-- **Run at conference**: Deploy to Azure, share URL with attendees
+- **Run at conference**: Run locally or host on your preferred platform
 
 ## Getting Help
 
@@ -387,21 +319,20 @@ import('./components/scenario-selector.js').then(module => {
 
 ## Quick Reference
 
-| Command | Purpose |
-|---------|---------|
-| `flask run` | Start dev server |
-| `pytest` | Run tests |
-| `black src/` | Format code |
-| `mypy src/` | Type check |
-| `az deployment group create` | Deploy to Azure |
-| `curl /api/health` | Health check |
-| `curl /api/scenarios` | List scenarios |
+| Command               | Purpose          |
+| --------------------- | ---------------- |
+| `flask run`           | Start dev server |
+| `pytest`              | Run tests        |
+| `black src/`          | Format code      |
+| `mypy src/`           | Type check       |
+| `curl /api/health`    | Health check     |
+| `curl /api/scenarios` | List scenarios   |
 
 ## Demo Checklist
 
 Before presenting:
 
-- [ ] App running locally or Azure URL accessible
+- [ ] App running locally and accessible in browser
 - [ ] All three sample scenarios load
 - [ ] Constitution tab displays four principles
 - [ ] Reset button returns to clean state (<5 seconds)

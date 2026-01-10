@@ -2,8 +2,6 @@
 
 An interactive web-based demonstration application for showcasing GitHub Spec Kit workflow capabilities to audiences during presentations and workshops.
 
-> Note: This is currently under active development and intended for demo purposes only. It is not a production-ready application.
-
 ![Demo Screenshot](docs/demo-screenshot.png)
 
 ## Features
@@ -54,7 +52,7 @@ flask run
 ### Option 3: Docker
 
 ```bash
-docker-compose up --build
+docker compose up --build
 # Open browser to http://localhost:5000
 ```
 
@@ -73,19 +71,19 @@ Use the **Constitution Panel** to view organizational principles and check compl
 
 📖 **[View Full OpenAPI Documentation](specs/001-speckit-demo-app/contracts/api.openapi.yaml)** | [Open in Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/YOUR_ORG/github-spec-kit-demo/main/specs/001-speckit-demo-app/contracts/api.openapi.yaml)
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/health` | GET | Health check endpoint |
-| `/api/scenarios` | GET | List all demo scenarios |
-| `/api/scenarios/{id}` | GET | Get specific scenario |
-| `/api/scenarios/custom` | POST | Create custom scenario |
-| `/api/workflow/{id}` | GET | Get workflow state |
-| `/api/workflow/{id}/step` | POST | Advance workflow phase |
-| `/api/workflow/{id}/jump` | POST | Jump to specific phase |
-| `/api/workflow/reset` | POST | Reset demo state |
-| `/api/constitution` | GET | List constitution principles |
-| `/api/constitution/check/{id}` | GET | Run constitution check |
-| `/api/presenter-notes/{type}/{id}` | GET | Get presenter notes |
+| Endpoint                           | Method | Description                  |
+| ---------------------------------- | ------ | ---------------------------- |
+| `/api/health`                      | GET    | Health check endpoint        |
+| `/api/scenarios`                   | GET    | List all demo scenarios      |
+| `/api/scenarios/{id}`              | GET    | Get specific scenario        |
+| `/api/scenarios/custom`            | POST   | Create custom scenario       |
+| `/api/workflow/{id}`               | GET    | Get workflow state           |
+| `/api/workflow/{id}/step`          | POST   | Advance workflow phase       |
+| `/api/workflow/{id}/jump`          | POST   | Jump to specific phase       |
+| `/api/workflow/reset`              | POST   | Reset demo state             |
+| `/api/constitution`                | GET    | List constitution principles |
+| `/api/constitution/check/{id}`     | GET    | Run constitution check       |
+| `/api/presenter-notes/{type}/{id}` | GET    | Get presenter notes          |
 
 ## Project Structure
 
@@ -106,11 +104,6 @@ github-spec-kit-demo/
 │   │   ├── js/               # JavaScript components
 │   │   └── css/              # Stylesheets
 │   └── tests/                # Playwright e2e tests
-├── infra/                     # Azure Bicep infrastructure
-│   ├── main.bicep            # Main template
-│   ├── modules/              # Bicep modules
-│   └── parameters/           # Environment parameters
-├── .github/workflows/         # CI/CD pipelines
 ├── .devcontainer/            # GitHub Codespaces config
 └── specs/                    # Feature specifications
 ```
@@ -119,9 +112,7 @@ github-spec-kit-demo/
 
 - **Backend**: Python 3.11+, Flask 3.0, Gunicorn
 - **Frontend**: Vanilla JavaScript, Alpine.js 3.13, Primer CSS 21.0
-- **Infrastructure**: Azure App Service, Application Insights, Bicep
 - **Testing**: pytest, pytest-cov, Playwright
-- **CI/CD**: GitHub Actions
 - **Linting**: Black, mypy, flake8, ESLint
 
 ## Development
@@ -159,7 +150,7 @@ flake8 src/ tests/
 - [Feature Specification](specs/001-speckit-demo-app/spec.md)
 - [Implementation Plan](specs/001-speckit-demo-app/plan.md)
 - [Task Breakdown](specs/001-speckit-demo-app/tasks.md)
-- [Developer Quickstart](specs/001-speckit-demo-app/quickstart.md)
+- [Developer Quickstart](quickstart.md)
 
 ## Constitution
 
@@ -173,7 +164,3 @@ This project follows the organizational principles defined in [.specify/memory/c
 ## License
 
 See LICENSE file for details.
-
-## Support
-
-For issues or questions, please open a GitHub issue with the `[demo-app]` prefix.
