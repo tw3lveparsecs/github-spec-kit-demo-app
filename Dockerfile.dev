@@ -13,23 +13,25 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY backend/requirements.txt backend/requirements-dev.txt ./
+COPY backend/requirements.txt backend/requirements-dev.txt /tmp/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir -r requirements-dev.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+    && pip install --no-cache-dir -r /tmp/requirements-dev.txt
 
-# Copy application code
-COPY backend/src ./src
-COPY backend/data ./data
-COPY frontend/src ./frontend/src
+# Copy application code (preserve repo layout)
+COPY backend/src /app/backend/src
+COPY backend/data /app/backend/data
+COPY frontend/src /app/frontend/src
 
 # Set environment variables
 ENV FLASK_APP=src/app.py
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app/backend/src:$PYTHONPATH
 
 EXPOSE 5000
+
+WORKDIR /app/backend
 
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

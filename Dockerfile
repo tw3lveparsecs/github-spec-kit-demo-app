@@ -1,7 +1,8 @@
-# Production Dockerfile for Azure App Service
+# Production Dockerfile
+# Keeps the same on-disk layout as the repo (backend/ + frontend/) so the containerized app
+# behaves the same as local development.
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -12,32 +13,31 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements
-COPY backend/requirements.txt .
-
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt \
+    && pip install --no-cache-dir gunicorn
 
-# Copy backend code
-COPY backend/src ./src
-COPY backend/data ./data
+# Copy application code (preserve repo layout)
+COPY backend/src /app/backend/src
+COPY backend/data /app/backend/data
+COPY frontend/src /app/frontend/src
 
-# Copy frontend static files
-COPY frontend/src ./frontend/src
+# Optional: include specs/constitution content if referenced by future scenarios
+COPY specs /app/specs
+COPY .specify /app/.specify
 
-# Set environment variables
+# Environment
 ENV FLASK_APP=src/app.py
-ENV PYTHONPATH=/app/src:$PYTHONPATH
-ENV PORT=8000
+ENV PYTHONPATH=/app/backend/src:$PYTHONPATH
+ENV PORT=5000
 
-# Expose port
-EXPOSE 8000
+EXPOSE 5000
 
-# Health check
+# Health check (supports PORT override)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || exit 1
+    CMD sh -c 'curl -fsS "http://localhost:${PORT}/api/health" >/dev/null || exit 1'
 
-# Run Flask with gunicorn for production
-RUN pip install --no-cache-dir gunicorn
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "src.app:app"]
+# Run with gunicorn
+WORKDIR /app/backend
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --workers 4 --timeout 120 src.app:app"]
